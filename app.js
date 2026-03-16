@@ -61,18 +61,6 @@ function getActive() {
     : formulas.filter(f => f.category === activeFilter);
 }
 
-// ── MathJax helpers ───────────────────────────────────────────
-function typesetEl(el) {
-  if (!el || !window.MathJax || !MathJax.typesetPromise) return;
-  if (MathJax.typesetClear) MathJax.typesetClear([el]);
-  MathJax.typesetPromise([el]).catch(console.warn);
-}
-
-function typeset(elements) {
-  if (!window.MathJax || !MathJax.typesetPromise) return;
-  MathJax.typesetPromise(elements).catch(console.warn);
-}
-
 // ── Escape HTML ───────────────────────────────────────────────
 function esc(s) {
   return String(s)
@@ -80,14 +68,6 @@ function esc(s) {
     .replace(/</g,'&lt;')
     .replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;');
-}
-
-// ── Wrap LaTeX ────────────────────────────────────────────────
-function wrapMath(raw) {
-  if (!raw) return '';
-  if (/\$\$/.test(raw) || /\\\[/.test(raw)) return raw;
-  if (/^\$[^$].*[^$]\$$/.test(raw.trim())) return raw;
-  return `$$${raw}$$`;
 }
 
 // ── Render board ──────────────────────────────────────────────
@@ -141,7 +121,6 @@ function renderBoard() {
     </div>
   `).join('');
 
-  typeset();
   renderFilters();
   initSortable();
 }
@@ -151,7 +130,7 @@ function cardHTML(f) {
     <div class="formula-card" id="card-${f.id}" data-id="${f.id}">
       <div class="drag-handle" title="Drag to move">⠿</div>
       <div class="card-title">${esc(f.title)}</div>
-      <div class="card-formula">${wrapMath(f.formula)}</div>
+      <div class="card-formula">${renderMath(f.formula)}</div>
       ${f.desc ? `<div class="card-desc">${esc(f.desc)}</div>` : ''}
       <div class="card-actions">
         <button class="btn btn-ghost" onclick="editFormula('${f.id}'); event.stopPropagation()">Edit</button>
@@ -306,8 +285,7 @@ function updatePreview() {
   previewTimer = setTimeout(() => {
     const raw = document.getElementById('fFormula').value.trim();
     const el  = document.getElementById('previewContent');
-    el.innerHTML = wrapMath(raw);
-    typesetEl(el);
+    el.innerHTML = renderMath(raw);
   }, 300);
 }
 
@@ -386,12 +364,10 @@ function showCard() {
   // Front
   document.getElementById('fcTitle').textContent = f.title;
 
-  // Back — set content and typeset NOW while the element is in the DOM
-  // (even though it's visually hidden via opacity, MathJax can still render it)
+  // Back — render math immediately (no async needed)
   const formulaEl = document.getElementById('fcFormula');
-  formulaEl.innerHTML = wrapMath(f.formula);
+  formulaEl.innerHTML = renderMath(f.formula);
   document.getElementById('fcDesc').textContent = f.desc || '';
-  typesetEl(formulaEl);
 
   // Progress
   document.getElementById('fcCounter').textContent    = `${fcIndex + 1} / ${fcDeck.length}`;

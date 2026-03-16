@@ -5,24 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CFA Formula Board</title>
   <link rel="stylesheet" href="style.css" />
-  <script>
-    MathJax = {
-      tex: {
-        inlineMath: [['$', '$'], ['\\(', '\\)']],
-        displayMath: [['$$', '$$'], ['\\[', '\\]']],
-        packages: {'[+]': ['ams']}
-      },
-      options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] },
-      startup: {
-        ready() {
-          MathJax.startup.defaultReady();
-          // Re-render the board now that MathJax is fully loaded
-          if (typeof renderBoard === 'function') renderBoard();
-        }
-      }
-    };
-  </script>
-  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  <script src="math.js"></script>
 </head>
 <body>
 
@@ -168,5 +151,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 <script src="app.js"></script>
+<!-- SortableJS is optional (drag-drop); app works fine without it -->
 </body>
 </html>

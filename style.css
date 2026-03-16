@@ -446,6 +446,108 @@ header {
 .fc-done .btn { margin: 0 6px; }
 .hidden { display: none !important; }
 
+/* ── Math rendering ──────────────────────────── */
+.mmath {
+  font-family: 'Georgia', 'Times New Roman', 'DejaVu Serif', serif;
+  font-style: normal;
+  line-height: 1;
+  display: inline;
+}
+.mmath i { font-style: italic; }
+.mmath b { font-weight: 700; }
+
+/* Fraction */
+.mfrac {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  vertical-align: middle;
+  margin: 0 3px;
+  line-height: 1.2;
+}
+.mnum {
+  border-bottom: 1.5px solid currentColor;
+  padding: 1px 4px 3px;
+  text-align: center;
+  min-width: 1ch;
+}
+.mden {
+  padding: 3px 4px 1px;
+  text-align: center;
+  min-width: 1ch;
+}
+
+/* Square root */
+.msqrt {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+}
+.msqrt-rad {
+  font-size: 1.2em;
+  line-height: 1;
+  margin-right: 1px;
+}
+.msqrt-body {
+  border-top: 1.5px solid currentColor;
+  padding: 1px 3px 0;
+}
+
+/* Superscript / subscript */
+.matom { display: inline; }
+.msup, sup.msup { font-size: 0.72em; vertical-align: super; line-height: 0; }
+.msub, sub.msub { font-size: 0.72em; vertical-align: sub;   line-height: 0; }
+.msupsub {
+  display: inline-flex;
+  flex-direction: column;
+  vertical-align: middle;
+  font-size: 0.72em;
+  line-height: 1.2;
+  margin-left: 1px;
+}
+.msupsub sup, .msupsub sub {
+  font-size: 1em;
+  display: block;
+  line-height: 1.1;
+  vertical-align: baseline;
+}
+
+/* Large operators (∑ ∏ ∫) with stacked limits */
+.mlop {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  vertical-align: middle;
+  margin: 0 3px;
+  line-height: 1;
+}
+.mlop-sym { font-size: 1.6em; line-height: 1; }
+.mlop-sup { font-size: 0.65em; order: -1; line-height: 1.2; }
+.mlop-sub { font-size: 0.65em; order: 1;  line-height: 1.2; }
+
+/* Accents */
+.mover  { border-top: 1.5px solid currentColor; padding-top: 1px; display: inline-block; }
+.munder { border-bottom: 1.5px solid currentColor; padding-bottom: 1px; display: inline-block; }
+.mhat::before   { content: '̂'; }
+.mtilde::before { content: '̃'; }
+.mvec::after    { content: '⃗'; font-size: 0.8em; }
+
+/* Delimiters */
+.mdelim { font-size: 1.2em; vertical-align: middle; }
+
+/* Functions (sin, cos, ln…) */
+.mfunc { font-style: normal; font-family: inherit; }
+
+/* Text inside math */
+.mtext { font-style: normal; font-family: 'Inter', 'Segoe UI', sans-serif; }
+
+/* Raw fallback */
+.mraw { font-size: 0.85em; color: var(--text-dim); }
+
+/* Card formula area — give it room for tall fractions */
+.card-formula { line-height: 2.4; }
+.fc-formula-display { line-height: 2.6; font-size: 1.25rem; }
+
 /* ── Scrollbars ──────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
