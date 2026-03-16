@@ -125,14 +125,18 @@ function renderBoard() {
   initSortable();
 }
 
+function renderLines(text) {
+  return text.split('\n').map(line => renderMath(line)).join('<br>');
+}
+
 function cardHTML(f) {
   return `
     <div class="formula-card" id="card-${f.id}" data-id="${f.id}" onclick="toggleCard(this)">
       <div class="drag-handle" title="Drag to move" onclick="event.stopPropagation()">⠿</div>
       <div class="card-title">${esc(f.title)}<span class="card-chevron">›</span></div>
       <div class="card-body">
-        <div class="card-formula">${renderMath(f.formula)}</div>
-        ${f.desc ? `<div class="card-desc">${esc(f.desc)}</div>` : ''}
+        <div class="card-formula">${renderLines(f.formula)}</div>
+        ${f.desc ? `<div class="card-desc">${f.desc.split('\n').map(esc).join('<br>')}</div>` : ''}
         <div class="card-actions">
           <button class="btn btn-ghost" onclick="editFormula('${f.id}'); event.stopPropagation()">Edit</button>
           <button class="btn btn-danger" onclick="deleteFormula('${f.id}'); event.stopPropagation()">Delete</button>
