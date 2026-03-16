@@ -15,11 +15,8 @@
     <span class="logo">CFA Formulas</span>
   </div>
   <div class="header-right">
-    <button class="btn btn-ghost" onclick="openRefModal()" title="LaTeX reference">? Help</button>
-    <button class="btn btn-ghost" onclick="exportFormulas()" title="Download your formulas as a backup file">↓ Export</button>
-    <label class="btn btn-ghost" title="Load formulas from a backup file" style="cursor:pointer">
-      ↑ Import<input type="file" id="importFile" accept=".json" onchange="importFormulas(event)" style="display:none">
-    </label>
+    <button class="btn btn-ghost" onclick="openHelpModal()">? Help</button>
+    <button class="btn btn-ghost" onclick="openRefModal()">Reference</button>
     <button id="btnPractice" class="btn btn-accent" onclick="openFlashcards()">Practice Flashcards</button>
     <button class="btn btn-primary" onclick="openAddModal()">+ New Formula</button>
   </div>
@@ -33,20 +30,6 @@
   <div class="filter-wrap" id="categoryFilters">
     <button class="filter-btn active" onclick="setFilter('all')">All</button>
   </div>
-</div>
-
-<!-- ===== SYNC BANNER ===== -->
-<div class="sync-banner">
-  <span class="sync-icon">🔄</span>
-  <div class="sync-text">
-    <strong>Syncing between devices?</strong>
-    <span class="sync-steps">
-      <span class="sync-step"><span class="step-num">1</span> On the device with your latest formulas, click <button class="inline-btn" onclick="exportFormulas()">↓ Export</button> — a <code>.json</code> file will download.</span>
-      <span class="sync-step"><span class="step-num">2</span> Move that file to your other device (AirDrop, iCloud, email, etc.).</span>
-      <span class="sync-step"><span class="step-num">3</span> On the other device, click <label class="inline-btn" style="cursor:pointer">↑ Import<input type="file" accept=".json" onchange="importFormulas(event)" style="display:none"></label> and select the file. Choose <em>Merge</em> to add new ones, or <em>Replace</em> to fully overwrite.</span>
-    </span>
-  </div>
-  <button class="sync-close" onclick="this.closest('.sync-banner').style.display='none'" title="Dismiss">✕</button>
 </div>
 
 <!-- ===== KANBAN BOARD ===== -->
@@ -80,7 +63,7 @@
     <label>Formula <span class="req">*</span>
       <span class="hint">Use LaTeX — e.g. <code>\frac{r-r_f}{\sigma}</code></span>
     </label>
-    <textarea id="fFormula" rows="3" placeholder="$$\frac{r - r_f}{\sigma}$$"></textarea>
+    <textarea id="fFormula" rows="3" placeholder="\frac{r - r_f}{\sigma}"></textarea>
 
     <label>Description / Notes</label>
     <textarea id="fDesc" rows="3" placeholder="Optional notes, context, variables explained…"></textarea>
@@ -130,16 +113,13 @@
       <div class="progress-bar"><div id="progressFill"></div></div>
     </div>
 
-    <!-- Card — fade-flip (no 3D, so MathJax renders correctly) -->
     <div class="fc-card-wrap" id="fcCardWrap">
       <div class="fc-card" id="fcCard" onclick="flipCard()">
-        <!-- FRONT -->
         <div class="fc-face fc-front" id="fcFront">
           <p class="fc-prompt">What is the formula for…</p>
           <h3 id="fcTitle"></h3>
           <p class="fc-tap">tap to reveal</p>
         </div>
-        <!-- BACK -->
         <div class="fc-face fc-back fc-hidden" id="fcBack">
           <div id="fcFormula" class="fc-formula-display"></div>
           <p id="fcDesc" class="fc-desc"></p>
@@ -168,14 +148,60 @@
   </div>
 </div>
 
-<!-- ===== LATEX REFERENCE MODAL ===== -->
+<!-- ===== HELP MODAL (sync / export / import) ===== -->
+<div id="helpModal" class="modal-overlay hidden">
+  <div class="modal modal-help">
+    <div class="ref-header">
+      <h2>Help &amp; Sync</h2>
+      <button class="btn btn-ghost" onclick="closeHelpModal()">✕</button>
+    </div>
+
+    <h3 class="ref-section">Syncing Between Devices</h3>
+    <p class="ref-intro">Your formulas are saved in your browser's local storage, so each device keeps its own copy. Use Export &amp; Import to keep them in sync.</p>
+
+    <div class="help-steps">
+      <div class="help-step">
+        <span class="step-num">1</span>
+        <div>
+          <strong>Export from your most up-to-date device</strong>
+          <p>Click the button below. A <code>.json</code> file will download to your device.</p>
+          <button class="btn btn-primary" style="margin-top:8px" onclick="exportFormulas()">↓ Export my formulas</button>
+        </div>
+      </div>
+      <div class="help-step">
+        <span class="step-num">2</span>
+        <div>
+          <strong>Move the file to your other device</strong>
+          <p>Use <strong>AirDrop</strong>, save to <strong>iCloud Drive</strong>, or email it to yourself — whichever is easiest.</p>
+        </div>
+      </div>
+      <div class="help-step">
+        <span class="step-num">3</span>
+        <div>
+          <strong>Import on the other device</strong>
+          <p>Open the app on your other device, come back to this Help screen, and click Import. Choose <em>Merge</em> to add new formulas without losing existing ones, or <em>Replace</em> to fully overwrite.</p>
+          <label class="btn btn-primary" style="margin-top:8px; cursor:pointer; display:inline-block">
+            ↑ Import formulas
+            <input type="file" accept=".json" onchange="importFormulas(event)" style="display:none">
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="closeHelpModal()">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== REFERENCE MODAL (LaTeX) ===== -->
 <div id="refModal" class="modal-overlay hidden">
   <div class="modal modal-ref">
     <div class="ref-header">
       <h2>LaTeX Formula Reference</h2>
       <button class="btn btn-ghost" onclick="closeRefModal()">✕</button>
     </div>
-    <p class="ref-intro">Type these directly into the Formula field. You don't need the <code>$$</code> — just the LaTeX inside.</p>
+    <p class="ref-intro">Type these directly into the Formula field. You don't need <code>$$</code> — just the LaTeX inside.</p>
 
     <h3 class="ref-section">Fractions &amp; Roots</h3>
     <table class="ref-table">
@@ -245,6 +271,5 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 <script src="app.js"></script>
-<!-- SortableJS is optional (drag-drop); app works fine without it -->
 </body>
 </html>

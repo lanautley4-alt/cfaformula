@@ -422,6 +422,14 @@ function showDone() {
   document.getElementById('fcDone').classList.remove('hidden');
 }
 
+// ── Help modal (sync / export / import) ──────────────────────
+function openHelpModal() {
+  document.getElementById('helpModal').classList.remove('hidden');
+}
+function closeHelpModal() {
+  document.getElementById('helpModal').classList.add('hidden');
+}
+
 // ── LaTeX Reference Modal ─────────────────────────────────────
 function openRefModal() {
   const modal = document.getElementById('refModal');
@@ -486,6 +494,7 @@ document.addEventListener('click', e => {
   if (e.target.id === 'formulaModal')   closeModal();
   if (e.target.id === 'flashcardModal') closeFlashcards();
   if (e.target.id === 'refModal')       closeRefModal();
+  if (e.target.id === 'helpModal')      closeHelpModal();
 });
 
 // ── Keyboard shortcuts ────────────────────────────────────────
@@ -497,6 +506,6 @@ document.addEventListener('keydown', e => {
     if (e.key === ' ')          { e.preventDefault(); flipCard(); }
     if (e.key === 'Escape')     closeFlashcards();
   } else {
-    if (e.key === 'Escape') { closeModal(); closeRefModal(); }
+    if (e.key === 'Escape') { closeModal(); closeRefModal(); closeHelpModal(); }
   }
 });
