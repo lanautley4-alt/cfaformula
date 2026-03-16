@@ -2,8 +2,22 @@
    CFA Formula Board — App Logic
    ============================================================ */
 
+// ── CFA exam categories ───────────────────────────────────────
+const CFA_CATEGORIES = [
+  'Ethical and Professional Standards',
+  'Quantitative Methods',
+  'Economics',
+  'Financial Statement Analysis',
+  'Corporate Issuers',
+  'Equity Investments',
+  'Fixed Income',
+  'Derivatives',
+  'Alternative Investments',
+  'Portfolio Management & Wealth Planning',
+];
+
 // ── Storage helpers ───────────────────────────────────────────
-const STORAGE_KEY = 'cfa_formulas_v2';   // v2 = fresh start
+const STORAGE_KEY = 'cfa_formulas_v2';
 
 function load() {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
@@ -34,7 +48,11 @@ function uid() {
 }
 
 function categories() {
-  return [...new Set(formulas.map(f => f.category).filter(Boolean))].sort();
+  // CFA order first, then any custom ones the user has added
+  const custom = [...new Set(formulas.map(f => f.category).filter(Boolean))]
+    .filter(c => !CFA_CATEGORIES.includes(c))
+    .sort();
+  return [...CFA_CATEGORIES.filter(c => formulas.some(f => f.category === c)), ...custom];
 }
 
 function getActive() {
@@ -45,10 +63,9 @@ function getActive() {
 
 // ── MathJax helpers ───────────────────────────────────────────
 function typesetEl(el) {
-  if (!window.MathJax) return;
-  // Clear any previous render so MathJax will re-process the element
+  if (!el || !window.MathJax || !MathJax.typesetPromise) return;
   if (MathJax.typesetClear) MathJax.typesetClear([el]);
-  if (MathJax.typesetPromise) MathJax.typesetPromise([el]).catch(console.warn);
+  MathJax.typesetPromise([el]).catch(console.warn);
 }
 
 function typeset(elements) {
@@ -102,7 +119,17 @@ function renderBoard() {
     return;
   }
 
-  board.innerHTML = Object.keys(groups).sort().map(cat => `
+  // Keep CFA order for columns
+  const sortedCats = Object.keys(groups).sort((a, b) => {
+    const ai = CFA_CATEGORIES.indexOf(a);
+    const bi = CFA_CATEGORIES.indexOf(b);
+    if (ai === -1 && bi === -1) return a.localeCompare(b);
+    if (ai === -1) return 1;
+    if (bi === -1) return -1;
+    return ai - bi;
+  });
+
+  board.innerHTML = sortedCats.map(cat => `
     <div class="column" data-category="${esc(cat)}">
       <div class="column-header">
         <span class="column-title">${esc(cat)}</span>
@@ -133,10 +160,9 @@ function cardHTML(f) {
     </div>`;
 }
 
-// ── Drag & drop (SortableJS) ──────────────────────────────────
+// ── Drag & drop ───────────────────────────────────────────────
 function initSortable() {
   if (typeof Sortable === 'undefined') return;
-
   document.querySelectorAll('.column-cards').forEach(container => {
     new Sortable(container, {
       group:       'formulas',
@@ -145,15 +171,13 @@ function initSortable() {
       ghostClass:  'card-ghost',
       chosenClass: 'card-chosen',
       onEnd(evt) {
-        const formulaId   = evt.item.dataset.id;
-        const newCat      = evt.to.dataset.category;
-        const formula     = formulas.find(f => f.id === formulaId);
-        if (!formula || !newCat) return;
-
-        if (formula.category !== newCat) {
+        const formulaId = evt.item.dataset.id;
+        const newCat    = evt.to.dataset.category;
+        const formula   = formulas.find(f => f.id === formulaId);
+        if (formula && newCat && formula.category !== newCat) {
           formula.category = newCat;
           save(formulas);
-          renderBoard();   // refresh counts + filters
+          renderBoard();
         }
       }
     });
@@ -164,9 +188,9 @@ function initSortable() {
 function renderFilters() {
   const wrap = document.getElementById('categoryFilters');
   const cats = categories();
-  const allBtn = `<button class="filter-btn ${activeFilter === 'all' ? 'active' : ''}" onclick="setFilter('all',this)">All</button>`;
+  const allBtn = `<button class="filter-btn ${activeFilter === 'all' ? 'active' : ''}" onclick="setFilter('all')">All</button>`;
   const catBtns = cats.map(c =>
-    `<button class="filter-btn ${activeFilter === c ? 'active' : ''}" onclick="setFilter('${esc(c)}',this)">${esc(c)}</button>`
+    `<button class="filter-btn ${activeFilter === c ? 'active' : ''}" onclick="setFilter('${esc(c)}')">${esc(c)}</button>`
   ).join('');
   wrap.innerHTML = allBtn + catBtns;
 }
@@ -174,6 +198,42 @@ function renderFilters() {
 function setFilter(cat) {
   activeFilter = cat;
   renderBoard();
+}
+
+// ── Category dropdown ─────────────────────────────────────────
+function onCatSelectChange() {
+  const sel    = document.getElementById('fCategory');
+  const custom = document.getElementById('fCategoryCustom');
+  if (sel.value === '__custom__') {
+    custom.classList.remove('hidden');
+    custom.focus();
+  } else {
+    custom.classList.add('hidden');
+  }
+}
+
+function getCategoryValue() {
+  const sel = document.getElementById('fCategory');
+  if (sel.value === '__custom__') {
+    return document.getElementById('fCategoryCustom').value.trim();
+  }
+  return sel.value;
+}
+
+function setCategorySelect(value) {
+  const sel = document.getElementById('fCategory');
+  const custom = document.getElementById('fCategoryCustom');
+  // Check if value is one of the standard options
+  const opt = [...sel.options].find(o => o.value === value || o.text === value);
+  if (opt) {
+    sel.value = opt.value || opt.text;
+    custom.classList.add('hidden');
+  } else if (value) {
+    // Custom category — add it as an option if not there and select __custom__
+    sel.value = '__custom__';
+    custom.classList.remove('hidden');
+    custom.value = value;
+  }
 }
 
 // ── Add / Edit Modal ──────────────────────────────────────────
@@ -184,10 +244,11 @@ function openAddModal() {
   document.getElementById('modalTitle').textContent = 'New Formula';
   document.getElementById('fTitle').value    = '';
   document.getElementById('fCategory').value = '';
+  document.getElementById('fCategoryCustom').value = '';
+  document.getElementById('fCategoryCustom').classList.add('hidden');
   document.getElementById('fFormula').value  = '';
   document.getElementById('fDesc').value     = '';
   document.getElementById('previewContent').innerHTML = '';
-  refreshCatList();
   document.getElementById('formulaModal').classList.remove('hidden');
   document.getElementById('fTitle').focus();
 }
@@ -197,11 +258,10 @@ function editFormula(id) {
   if (!f) return;
   editingId = id;
   document.getElementById('modalTitle').textContent = 'Edit Formula';
-  document.getElementById('fTitle').value    = f.title;
-  document.getElementById('fCategory').value = f.category;
-  document.getElementById('fFormula').value  = f.formula;
-  document.getElementById('fDesc').value     = f.desc || '';
-  refreshCatList();
+  document.getElementById('fTitle').value   = f.title;
+  document.getElementById('fFormula').value = f.formula;
+  document.getElementById('fDesc').value    = f.desc || '';
+  setCategorySelect(f.category);
   document.getElementById('formulaModal').classList.remove('hidden');
   updatePreview();
 }
@@ -213,12 +273,12 @@ function closeModal() {
 
 function saveFormula() {
   const title    = document.getElementById('fTitle').value.trim();
-  const category = document.getElementById('fCategory').value.trim();
+  const category = getCategoryValue();
   const formula  = document.getElementById('fFormula').value.trim();
   const desc     = document.getElementById('fDesc').value.trim();
 
   if (!title)    { alert('Please enter a title.'); return; }
-  if (!category) { alert('Please enter a category.'); return; }
+  if (!category) { alert('Please select a category.'); return; }
   if (!formula)  { alert('Please enter a formula.'); return; }
 
   if (editingId) {
@@ -267,11 +327,6 @@ function insertLatex(snippet) {
   updatePreview();
 }
 
-function refreshCatList() {
-  const dl = document.getElementById('catList');
-  dl.innerHTML = categories().map(c => `<option value="${esc(c)}"></option>`).join('');
-}
-
 // ── Flashcards ────────────────────────────────────────────────
 function openFlashcards() {
   const sel = document.getElementById('fcCatSelect');
@@ -302,21 +357,24 @@ function startDeck(missedOnly = false) {
   fcIndex = 0;
 
   document.getElementById('fcDone').classList.add('hidden');
-  document.getElementById('fcCardWrap').style.display = '';
-  document.querySelector('.fc-nav').style.display      = '';
-  document.querySelector('.fc-self-grade').style.display = '';
+  document.getElementById('fcCardWrap').style.display     = '';
+  document.querySelector('.fc-nav').style.display         = '';
+  document.getElementById('fcSelfGrade').classList.add('hidden');
 
   showCard();
 }
 
 function showCard() {
+  // Reset to front
   fcFlipped = false;
-  document.getElementById('fcCard').classList.remove('flipped');
+  document.getElementById('fcFront').classList.remove('fc-hidden');
+  document.getElementById('fcBack').classList.add('fc-hidden');
   document.getElementById('fcSelfGrade').classList.add('hidden');
+  document.getElementById('btnFlip').textContent = 'Flip';
 
   if (fcDeck.length === 0) {
-    document.getElementById('fcTitle').textContent    = 'No formulas yet — add some first!';
-    document.getElementById('fcCounter').textContent  = '0 / 0';
+    document.getElementById('fcTitle').textContent     = 'No formulas yet — add some first!';
+    document.getElementById('fcCounter').textContent   = '0 / 0';
     document.getElementById('progressFill').style.width = '0%';
     return;
   }
@@ -328,35 +386,32 @@ function showCard() {
   // Front
   document.getElementById('fcTitle').textContent = f.title;
 
-  // Back — set raw LaTeX then typeset after a frame so DOM is ready
+  // Back — set content and typeset NOW while the element is in the DOM
+  // (even though it's visually hidden via opacity, MathJax can still render it)
   const formulaEl = document.getElementById('fcFormula');
-  const descEl    = document.getElementById('fcDesc');
-
   formulaEl.innerHTML = wrapMath(f.formula);
-  descEl.textContent  = f.desc || '';
-
-  // Progress bar
-  document.getElementById('fcCounter').textContent   = `${fcIndex + 1} / ${fcDeck.length}`;
-  document.getElementById('progressFill').style.width = `${((fcIndex + 1) / fcDeck.length) * 100}%`;
-
-  // Typeset immediately (back face is in DOM even while rotated)
+  document.getElementById('fcDesc').textContent = f.desc || '';
   typesetEl(formulaEl);
+
+  // Progress
+  document.getElementById('fcCounter').textContent    = `${fcIndex + 1} / ${fcDeck.length}`;
+  document.getElementById('progressFill').style.width = `${((fcIndex + 1) / fcDeck.length) * 100}%`;
 }
 
 function flipCard() {
   if (fcDeck.length === 0) return;
   fcFlipped = !fcFlipped;
-  document.getElementById('fcCard').classList.toggle('flipped', fcFlipped);
 
   if (fcFlipped) {
+    document.getElementById('fcFront').classList.add('fc-hidden');
+    document.getElementById('fcBack').classList.remove('fc-hidden');
     document.getElementById('fcSelfGrade').classList.remove('hidden');
-    // Re-typeset after the flip animation finishes (450 ms) to fix any
-    // sizing glitches that happen while the element was facing away
-    setTimeout(() => {
-      typesetEl(document.getElementById('fcFormula'));
-    }, 460);
+    document.getElementById('btnFlip').textContent = 'Unflip';
   } else {
+    document.getElementById('fcFront').classList.remove('fc-hidden');
+    document.getElementById('fcBack').classList.add('fc-hidden');
     document.getElementById('fcSelfGrade').classList.add('hidden');
+    document.getElementById('btnFlip').textContent = 'Flip';
   }
 }
 
@@ -377,9 +432,9 @@ function gradeCard(correct) {
 
 function showDone() {
   fcMissedSet = fcMissed.slice();
-  document.getElementById('fcCardWrap').style.display     = 'none';
-  document.querySelector('.fc-nav').style.display         = 'none';
-  document.querySelector('.fc-self-grade').style.display  = 'none';
+  document.getElementById('fcCardWrap').style.display   = 'none';
+  document.querySelector('.fc-nav').style.display       = 'none';
+  document.getElementById('fcSelfGrade').classList.add('hidden');
 
   const total = fcDeck.length;
   const pct   = total > 0 ? Math.round((fcCorrect / total) * 100) : 0;

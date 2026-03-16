@@ -12,7 +12,14 @@
         displayMath: [['$$', '$$'], ['\\[', '\\]']],
         packages: {'[+]': ['ams']}
       },
-      options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] },
+      startup: {
+        ready() {
+          MathJax.startup.defaultReady();
+          // Re-render the board now that MathJax is fully loaded
+          if (typeof renderBoard === 'function') renderBoard();
+        }
+      }
     };
   </script>
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
@@ -36,7 +43,7 @@
     <input id="searchInput" type="text" placeholder="Search formulas…" oninput="renderBoard()" />
   </div>
   <div class="filter-wrap" id="categoryFilters">
-    <button class="filter-btn active" data-cat="all" onclick="setFilter('all', this)">All</button>
+    <button class="filter-btn active" onclick="setFilter('all')">All</button>
   </div>
 </div>
 
@@ -52,10 +59,21 @@
     <input id="fTitle" type="text" placeholder="e.g. Sharpe Ratio" />
 
     <label>Category <span class="req">*</span></label>
-    <div class="cat-row">
-      <input id="fCategory" type="text" list="catList" placeholder="e.g. Fixed Income" />
-      <datalist id="catList"></datalist>
-    </div>
+    <select id="fCategory" onchange="onCatSelectChange()">
+      <option value="">— Select a category —</option>
+      <option>Ethical and Professional Standards</option>
+      <option>Quantitative Methods</option>
+      <option>Economics</option>
+      <option>Financial Statement Analysis</option>
+      <option>Corporate Issuers</option>
+      <option>Equity Investments</option>
+      <option>Fixed Income</option>
+      <option>Derivatives</option>
+      <option>Alternative Investments</option>
+      <option>Portfolio Management &amp; Wealth Planning</option>
+      <option value="__custom__">Other / Custom…</option>
+    </select>
+    <input id="fCategoryCustom" type="text" placeholder="Enter custom category name" class="hidden" style="margin-top:6px" />
 
     <label>Formula <span class="req">*</span>
       <span class="hint">Use LaTeX — e.g. <code>\frac{r-r_f}{\sigma}</code></span>
@@ -110,15 +128,17 @@
       <div class="progress-bar"><div id="progressFill"></div></div>
     </div>
 
-    <!-- Card -->
+    <!-- Card — fade-flip (no 3D, so MathJax renders correctly) -->
     <div class="fc-card-wrap" id="fcCardWrap">
       <div class="fc-card" id="fcCard" onclick="flipCard()">
-        <div class="fc-front" id="fcFront">
+        <!-- FRONT -->
+        <div class="fc-face fc-front" id="fcFront">
           <p class="fc-prompt">What is the formula for…</p>
           <h3 id="fcTitle"></h3>
           <p class="fc-tap">tap to reveal</p>
         </div>
-        <div class="fc-back" id="fcBack">
+        <!-- BACK -->
+        <div class="fc-face fc-back fc-hidden" id="fcBack">
           <div id="fcFormula" class="fc-formula-display"></div>
           <p id="fcDesc" class="fc-desc"></p>
         </div>
@@ -126,12 +146,12 @@
     </div>
 
     <div class="fc-nav">
-      <button class="btn btn-ghost" id="btnPrev" onclick="prevCard()">← Prev</button>
+      <button class="btn btn-ghost" onclick="prevCard()">← Prev</button>
       <button class="btn btn-accent" onclick="flipCard()" id="btnFlip">Flip</button>
-      <button class="btn btn-primary" id="btnNext" onclick="nextCard()">Next →</button>
+      <button class="btn btn-primary" onclick="nextCard()">Next →</button>
     </div>
 
-    <div class="fc-self-grade" id="fcSelfGrade">
+    <div class="fc-self-grade hidden" id="fcSelfGrade">
       <p>Did you get it?</p>
       <button class="btn btn-success" onclick="gradeCard(true)">✓ Got it</button>
       <button class="btn btn-danger"  onclick="gradeCard(false)">✗ Review again</button>

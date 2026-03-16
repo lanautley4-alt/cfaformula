@@ -355,26 +355,22 @@ header {
   transition: width .3s;
 }
 
-/* Card flip */
+/* Card — fade flip (no 3D so MathJax renders correctly) */
 .fc-card-wrap {
-  perspective: 1000px;
-  height: 280px;
+  height: 300px;
   margin-bottom: 18px;
   cursor: pointer;
+  position: relative;
 }
 .fc-card {
   position: relative;
   width: 100%;
   height: 100%;
-  transform-style: preserve-3d;
-  transition: transform .45s cubic-bezier(.4,0,.2,1);
 }
-.fc-card.flipped { transform: rotateY(180deg); }
 
-.fc-front, .fc-back {
+.fc-face {
   position: absolute;
   inset: 0;
-  backface-visibility: hidden;
   background: var(--surface2);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -384,8 +380,21 @@ header {
   justify-content: center;
   padding: 28px;
   text-align: center;
+  transition: opacity .3s ease, transform .3s ease;
 }
-.fc-back { transform: rotateY(180deg); }
+
+/* Hidden face: invisible but still in DOM so MathJax can render it */
+.fc-face.fc-hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(.97);
+}
+.fc-face:not(.fc-hidden) {
+  opacity: 1;
+  pointer-events: auto;
+  transform: scale(1);
+}
+
 .fc-prompt { font-size: .82rem; color: var(--text-dim); margin-bottom: 10px; }
 #fcTitle { font-size: 1.4rem; font-weight: 700; }
 .fc-tap { font-size: .75rem; color: var(--text-dim); margin-top: 14px; }
