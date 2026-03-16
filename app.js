@@ -165,9 +165,17 @@ function initSortable() {
         const formula   = formulas.find(f => f.id === formulaId);
         if (formula && newCat && formula.category !== newCat) {
           formula.category = newCat;
-          save(formulas);
-          renderBoard();
         }
+        // Rebuild formulas array in DOM order so position is persisted
+        const ordered = [];
+        document.querySelectorAll('.formula-card').forEach(card => {
+          const f = formulas.find(x => x.id === card.dataset.id);
+          if (f) ordered.push(f);
+        });
+        // Keep any formulas not currently visible (filtered out) at the end
+        formulas.forEach(f => { if (!ordered.includes(f)) ordered.push(f); });
+        formulas = ordered;
+        save(formulas);
       }
     });
   });
