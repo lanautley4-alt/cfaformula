@@ -303,7 +303,7 @@ function updatePreview() {
   previewTimer = setTimeout(() => {
     const raw = document.getElementById('fFormula').value.trim();
     const el  = document.getElementById('previewContent');
-    el.innerHTML = renderMath(raw);
+    el.innerHTML = renderLines(raw);
   }, 300);
 }
 
@@ -384,8 +384,8 @@ function showCard() {
 
   // Back — render math immediately (no async needed)
   const formulaEl = document.getElementById('fcFormula');
-  formulaEl.innerHTML = renderMath(f.formula);
-  document.getElementById('fcDesc').textContent = f.desc || '';
+  formulaEl.innerHTML = renderLines(f.formula);
+  document.getElementById('fcDesc').innerHTML = (f.desc || '').split('\n').map(esc).join('<br>');
 
   // Progress
   document.getElementById('fcCounter').textContent    = `${fcIndex + 1} / ${fcDeck.length}`;
