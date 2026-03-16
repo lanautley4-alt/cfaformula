@@ -181,12 +181,25 @@ header {
   box-shadow: 0 8px 32px rgba(0,0,0,.5);
   border-color: var(--accent);
 }
+.formula-card { cursor: pointer; }
 .card-title {
   font-size: .9rem;
   font-weight: 700;
-  margin-bottom: 8px;
   color: var(--text);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
+.card-chevron {
+  color: var(--text-dim);
+  font-size: 1.1rem;
+  line-height: 1;
+  transition: transform .2s;
+  flex-shrink: 0;
+}
+.formula-card.expanded .card-chevron { transform: rotate(90deg); }
+.card-body { display: none; margin-top: 8px; }
+.formula-card.expanded .card-body { display: block; }
 .card-formula {
   font-size: 1rem;
   color: var(--text);
