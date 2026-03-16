@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CFA Formula Board</title>
+  <link rel="stylesheet" href="style.css" />
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        packages: {'[+]': ['ams']}
+      },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header>
+  <div class="header-left">
+    <span class="logo">CFA Formulas</span>
+  </div>
+  <div class="header-right">
+    <button id="btnPractice" class="btn btn-accent" onclick="openFlashcards()">Practice Flashcards</button>
+    <button class="btn btn-primary" onclick="openAddModal()">+ New Formula</button>
+  </div>
+</header>
+
+<!-- ===== CATEGORY FILTER ===== -->
+<div class="toolbar">
+  <div class="search-wrap">
+    <input id="searchInput" type="text" placeholder="Search formulas…" oninput="renderBoard()" />
+  </div>
+  <div class="filter-wrap" id="categoryFilters">
+    <button class="filter-btn active" data-cat="all" onclick="setFilter('all', this)">All</button>
+  </div>
+</div>
+
+<!-- ===== KANBAN BOARD ===== -->
+<main id="board" class="board"></main>
+
+<!-- ===== ADD / EDIT MODAL ===== -->
+<div id="formulaModal" class="modal-overlay hidden">
+  <div class="modal">
+    <h2 id="modalTitle">New Formula</h2>
+
+    <label>Title <span class="req">*</span></label>
+    <input id="fTitle" type="text" placeholder="e.g. Sharpe Ratio" />
+
+    <label>Category <span class="req">*</span></label>
+    <div class="cat-row">
+      <input id="fCategory" type="text" list="catList" placeholder="e.g. Fixed Income" />
+      <datalist id="catList"></datalist>
+    </div>
+
+    <label>Formula <span class="req">*</span>
+      <span class="hint">Use LaTeX — e.g. <code>\frac{r-r_f}{\sigma}</code></span>
+    </label>
+    <textarea id="fFormula" rows="3" placeholder="$$\frac{r - r_f}{\sigma}$$"></textarea>
+
+    <label>Description / Notes</label>
+    <textarea id="fDesc" rows="3" placeholder="Optional notes, context, variables explained…"></textarea>
+
+    <div class="latex-helper">
+      <span class="helper-label">Quick inserts:</span>
+      <button type="button" onclick="insertLatex('\\frac{a}{b}')">a/b</button>
+      <button type="button" onclick="insertLatex('a^{n}')">a^n</button>
+      <button type="button" onclick="insertLatex('\\sqrt{x}')">√x</button>
+      <button type="button" onclick="insertLatex('\\sum_{i=1}^{n}')">Σ</button>
+      <button type="button" onclick="insertLatex('\\prod_{i=1}^{n}')">Π</button>
+      <button type="button" onclick="insertLatex('\\left(1+r\\right)^{n}')"><small>(1+r)^n</small></button>
+      <button type="button" onclick="insertLatex('\\Delta')">Δ</button>
+      <button type="button" onclick="insertLatex('\\times')">×</button>
+      <button type="button" onclick="insertLatex('\\pm')">±</button>
+    </div>
+
+    <div class="preview-box" id="fPreview">
+      <span class="preview-label">Preview</span>
+      <div id="previewContent"></div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveFormula()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== FLASHCARD MODAL ===== -->
+<div id="flashcardModal" class="modal-overlay hidden">
+  <div class="modal modal-fc">
+    <div class="fc-header">
+      <h2>Practice Mode</h2>
+      <div class="fc-controls">
+        <label>Category:
+          <select id="fcCatSelect" onchange="startDeck()">
+            <option value="all">All</option>
+          </select>
+        </label>
+        <button class="btn btn-ghost" onclick="closeFlashcards()">✕ Exit</button>
+      </div>
+    </div>
+
+    <div class="fc-progress">
+      <span id="fcCounter">0 / 0</span>
+      <div class="progress-bar"><div id="progressFill"></div></div>
+    </div>
+
+    <!-- Card -->
+    <div class="fc-card-wrap" id="fcCardWrap">
+      <div class="fc-card" id="fcCard" onclick="flipCard()">
+        <div class="fc-front" id="fcFront">
+          <p class="fc-prompt">What is the formula for…</p>
+          <h3 id="fcTitle"></h3>
+          <p class="fc-tap">tap to reveal</p>
+        </div>
+        <div class="fc-back" id="fcBack">
+          <div id="fcFormula" class="fc-formula-display"></div>
+          <p id="fcDesc" class="fc-desc"></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="fc-nav">
+      <button class="btn btn-ghost" id="btnPrev" onclick="prevCard()">← Prev</button>
+      <button class="btn btn-accent" onclick="flipCard()" id="btnFlip">Flip</button>
+      <button class="btn btn-primary" id="btnNext" onclick="nextCard()">Next →</button>
+    </div>
+
+    <div class="fc-self-grade" id="fcSelfGrade">
+      <p>Did you get it?</p>
+      <button class="btn btn-success" onclick="gradeCard(true)">✓ Got it</button>
+      <button class="btn btn-danger"  onclick="gradeCard(false)">✗ Review again</button>
+    </div>
+
+    <div class="fc-done hidden" id="fcDone">
+      <h3>Round complete!</h3>
+      <p id="fcScore"></p>
+      <button class="btn btn-primary" onclick="startDeck()">Restart</button>
+      <button class="btn btn-accent"  onclick="startDeck(true)">Only missed</button>
+    </div>
+  </div>
+</div>
+
+<script src="seed.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
