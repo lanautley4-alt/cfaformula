@@ -55,6 +55,8 @@ function esc(s) {
 }
 
 // ── Tokenizer ─────────────────────────────────────────────────
+const TEXT_CMDS = ['text','mathrm','textrm','textbf','mathbf','textit','mathit','operatorname'];
+
 function tokenize(src) {
   const toks = [];
   let i = 0;
@@ -67,13 +69,30 @@ function tokenize(src) {
       if (!/[a-zA-Z]/.test(src[i])) { toks.push({t:'sym', v:src[i]}); i++; continue; }
       let name = '';
       while (i < src.length && /[a-zA-Z]/.test(src[i])) { name += src[i++]; }
+      // Text commands: read braced content raw so spaces are preserved
+      if (TEXT_CMDS.includes(name)) {
+        while (i < src.length && src[i] === ' ') i++;
+        if (src[i] === '{') {
+          i++;
+          let raw = '', depth = 1;
+          while (i < src.length) {
+            if      (src[i] === '{') { depth++; raw += src[i++]; }
+            else if (src[i] === '}') { depth--; if (depth === 0) { i++; break; } raw += src[i++]; }
+            else                     { raw += src[i++]; }
+          }
+          toks.push({t:'textraw', cmd:name, v:raw});
+        } else {
+          toks.push({t:'cmd', v:name});
+        }
+        continue;
+      }
       toks.push({t:'cmd', v:name});
     } else if (c === '{') { toks.push({t:'lb'}); i++; }
-    else if (c === '}') { toks.push({t:'rb'}); i++; }
-    else if (c === '^') { toks.push({t:'hat'}); i++; }
-    else if (c === '_') { toks.push({t:'und'}); i++; }
-    else if (c === '&' || c === '\n' || c === '\r') { i++; } // skip
-    else if (c === ' ' || c === '\t') { i++; } // skip whitespace
+    else if (c === '}')   { toks.push({t:'rb'}); i++; }
+    else if (c === '^')   { toks.push({t:'hat'}); i++; }
+    else if (c === '_')   { toks.push({t:'und'}); i++; }
+    else if (c === '&' || c === '\n' || c === '\r') { i++; }
+    else if (c === ' ' || c === '\t') { i++; }
     else { toks.push({t:'ch', v:c}); i++; }
   }
   return toks;
@@ -104,9 +123,10 @@ function parseAtom() {
 
   if (tok.t === 'rb' || tok.t === 'hat' || tok.t === 'und') return null;
 
-  if (tok.t === 'ch')  { P++; return {t:'ch', v:tok.v}; }
-  if (tok.t === 'sym') { P++; return {t:'sym', v:tok.v}; }
+  if (tok.t === 'ch')      { P++; return {t:'ch', v:tok.v}; }
+  if (tok.t === 'sym')     { P++; return {t:'sym', v:tok.v}; }
   if (tok.t === 'newline') { P++; return {t:'br'}; }
+  if (tok.t === 'textraw') { P++; return {t:'txtraw', cmd:tok.cmd, v:tok.v}; }
 
   if (tok.t === 'lb') {
     P++; // eat {
@@ -286,6 +306,13 @@ function rNode(n) {
       return n.cmd === 'underbrace'
         ? `<span class="munderbrace">${c}</span>`
         : `<span class="moverbrace">${c}</span>`;
+    }
+
+    case 'txtraw': {
+      const v = esc(n.v);
+      if (n.cmd === 'textbf' || n.cmd === 'mathbf') return `<b class="mtext">${v}</b>`;
+      if (n.cmd === 'textit' || n.cmd === 'mathit') return `<i class="mtext">${v}</i>`;
+      return `<span class="mtext">${v}</span>`;
     }
 
     case 'txt': {
