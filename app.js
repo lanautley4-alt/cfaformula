@@ -422,10 +422,70 @@ function showDone() {
   document.getElementById('fcDone').classList.remove('hidden');
 }
 
+// ── LaTeX Reference Modal ─────────────────────────────────────
+function openRefModal() {
+  const modal = document.getElementById('refModal');
+  modal.classList.remove('hidden');
+  modal.querySelectorAll('.ref-preview').forEach(cell => {
+    if (!cell.dataset.rendered) {
+      const code = cell.closest('tr').querySelector('code').textContent;
+      cell.innerHTML = renderMath(code);
+      cell.dataset.rendered = '1';
+    }
+  });
+}
+function closeRefModal() {
+  document.getElementById('refModal').classList.add('hidden');
+}
+
+// ── Export ────────────────────────────────────────────────────
+function exportFormulas() {
+  const data = JSON.stringify(formulas, null, 2);
+  const blob = new Blob([data], {type: 'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `cfa-formulas-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── Import ────────────────────────────────────────────────────
+function importFormulas(evt) {
+  const file = evt.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (!Array.isArray(imported)) throw new Error('Invalid format');
+      const merge = confirm(
+        `Found ${imported.length} formula(s).\n\nMerge with your existing ${formulas.length}? (OK = merge, Cancel = replace all)`
+      );
+      if (merge) {
+        const existingIds = new Set(formulas.map(f => f.id));
+        const newOnes = imported.filter(f => !existingIds.has(f.id));
+        formulas = [...formulas, ...newOnes];
+        alert(`Added ${newOnes.length} new formula(s). ${imported.length - newOnes.length} duplicate(s) skipped.`);
+      } else {
+        formulas = imported;
+        alert(`Replaced board with ${formulas.length} formula(s).`);
+      }
+      save(formulas);
+      renderBoard();
+    } catch(err) {
+      alert('Could not read file. Make sure it\'s a valid CFA Formulas export (.json).');
+    }
+    evt.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
 // ── Close modals on overlay click ────────────────────────────
 document.addEventListener('click', e => {
   if (e.target.id === 'formulaModal')   closeModal();
   if (e.target.id === 'flashcardModal') closeFlashcards();
+  if (e.target.id === 'refModal')       closeRefModal();
 });
 
 // ── Keyboard shortcuts ────────────────────────────────────────
@@ -437,6 +497,6 @@ document.addEventListener('keydown', e => {
     if (e.key === ' ')          { e.preventDefault(); flipCard(); }
     if (e.key === 'Escape')     closeFlashcards();
   } else {
-    if (e.key === 'Escape') closeModal();
+    if (e.key === 'Escape') { closeModal(); closeRefModal(); }
   }
 });

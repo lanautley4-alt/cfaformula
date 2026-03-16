@@ -548,6 +548,57 @@ header {
 .card-formula { line-height: 2.4; }
 .fc-formula-display { line-height: 2.6; font-size: 1.25rem; }
 
+/* ── Reference modal ─────────────────────────── */
+.modal-ref { max-width: 700px; }
+.ref-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.ref-intro {
+  font-size: .83rem;
+  color: var(--text-dim);
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+.ref-section {
+  font-size: .8rem;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  color: var(--accent);
+  margin: 18px 0 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+.ref-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .85rem;
+}
+.ref-table tr:hover td { background: var(--surface2); }
+.ref-table td {
+  padding: 5px 8px;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--border);
+}
+.ref-table td:first-child { width: 44%; }
+.ref-table td:last-child  { color: var(--text-dim); font-size: .8rem; }
+.ref-table code {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 5px;
+  font-size: .82rem;
+  color: var(--accent);
+  white-space: nowrap;
+}
+.ref-preview {
+  min-width: 80px;
+  text-align: center;
+  padding: 4px 12px;
+}
+
 /* ── Scrollbars ──────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }

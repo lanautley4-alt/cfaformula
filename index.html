@@ -15,6 +15,11 @@
     <span class="logo">CFA Formulas</span>
   </div>
   <div class="header-right">
+    <button class="btn btn-ghost" onclick="openRefModal()" title="LaTeX reference">? Help</button>
+    <button class="btn btn-ghost" onclick="exportFormulas()" title="Download your formulas as a backup file">↓ Export</button>
+    <label class="btn btn-ghost" title="Load formulas from a backup file" style="cursor:pointer">
+      ↑ Import<input type="file" id="importFile" accept=".json" onchange="importFormulas(event)" style="display:none">
+    </label>
     <button id="btnPractice" class="btn btn-accent" onclick="openFlashcards()">Practice Flashcards</button>
     <button class="btn btn-primary" onclick="openAddModal()">+ New Formula</button>
   </div>
@@ -145,6 +150,81 @@
       <p id="fcScore"></p>
       <button class="btn btn-primary" onclick="startDeck()">Restart</button>
       <button class="btn btn-accent"  onclick="startDeck(true)">Only missed</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== LATEX REFERENCE MODAL ===== -->
+<div id="refModal" class="modal-overlay hidden">
+  <div class="modal modal-ref">
+    <div class="ref-header">
+      <h2>LaTeX Formula Reference</h2>
+      <button class="btn btn-ghost" onclick="closeRefModal()">✕</button>
+    </div>
+    <p class="ref-intro">Type these directly into the Formula field. You don't need the <code>$$</code> — just the LaTeX inside.</p>
+
+    <h3 class="ref-section">Fractions &amp; Roots</h3>
+    <table class="ref-table">
+      <tr><td><code>\frac{a}{b}</code></td><td class="ref-preview"></td><td>Fraction</td></tr>
+      <tr><td><code>\frac{r - r_f}{\sigma}</code></td><td class="ref-preview"></td><td>Sharpe Ratio example</td></tr>
+      <tr><td><code>\sqrt{x}</code></td><td class="ref-preview"></td><td>Square root</td></tr>
+      <tr><td><code>\sqrt{\sigma_1^2 + \sigma_2^2}</code></td><td class="ref-preview"></td><td>Root of expression</td></tr>
+    </table>
+
+    <h3 class="ref-section">Superscripts &amp; Subscripts</h3>
+    <table class="ref-table">
+      <tr><td><code>x^{n}</code></td><td class="ref-preview"></td><td>Superscript (power)</td></tr>
+      <tr><td><code>x_{i}</code></td><td class="ref-preview"></td><td>Subscript</td></tr>
+      <tr><td><code>x_{i}^{n}</code></td><td class="ref-preview"></td><td>Both at once</td></tr>
+      <tr><td><code>(1+r)^{n}</code></td><td class="ref-preview"></td><td>Compound growth</td></tr>
+      <tr><td><code>e^{-rT}</code></td><td class="ref-preview"></td><td>Exponential</td></tr>
+    </table>
+
+    <h3 class="ref-section">Greek Letters</h3>
+    <table class="ref-table">
+      <tr><td><code>\alpha</code></td><td class="ref-preview"></td><td>Alpha (Jensen's α)</td></tr>
+      <tr><td><code>\beta</code></td><td class="ref-preview"></td><td>Beta (systematic risk)</td></tr>
+      <tr><td><code>\sigma</code></td><td class="ref-preview"></td><td>Sigma (std deviation)</td></tr>
+      <tr><td><code>\mu</code></td><td class="ref-preview"></td><td>Mu (mean)</td></tr>
+      <tr><td><code>\rho</code></td><td class="ref-preview"></td><td>Rho (correlation)</td></tr>
+      <tr><td><code>\Delta</code></td><td class="ref-preview"></td><td>Delta (change)</td></tr>
+      <tr><td><code>\lambda</code></td><td class="ref-preview"></td><td>Lambda</td></tr>
+      <tr><td><code>\Sigma</code></td><td class="ref-preview"></td><td>Capital Sigma</td></tr>
+    </table>
+
+    <h3 class="ref-section">Sums, Products &amp; Limits</h3>
+    <table class="ref-table">
+      <tr><td><code>\sum_{i=1}^{n} x_i</code></td><td class="ref-preview"></td><td>Summation</td></tr>
+      <tr><td><code>\prod_{i=1}^{n}</code></td><td class="ref-preview"></td><td>Product</td></tr>
+      <tr><td><code>\int_{0}^{T}</code></td><td class="ref-preview"></td><td>Integral</td></tr>
+    </table>
+
+    <h3 class="ref-section">Symbols &amp; Operators</h3>
+    <table class="ref-table">
+      <tr><td><code>\times</code></td><td class="ref-preview"></td><td>Multiplication ×</td></tr>
+      <tr><td><code>\pm</code></td><td class="ref-preview"></td><td>Plus or minus ±</td></tr>
+      <tr><td><code>\approx</code></td><td class="ref-preview"></td><td>Approximately ≈</td></tr>
+      <tr><td><code>\leq</code></td><td class="ref-preview"></td><td>Less than or equal ≤</td></tr>
+      <tr><td><code>\geq</code></td><td class="ref-preview"></td><td>Greater than or equal ≥</td></tr>
+      <tr><td><code>\infty</code></td><td class="ref-preview"></td><td>Infinity ∞</td></tr>
+      <tr><td><code>\cdot</code></td><td class="ref-preview"></td><td>Dot product ·</td></tr>
+    </table>
+
+    <h3 class="ref-section">Accents &amp; Decorations</h3>
+    <table class="ref-table">
+      <tr><td><code>\bar{R}</code></td><td class="ref-preview"></td><td>Bar / mean</td></tr>
+      <tr><td><code>\overline{xy}</code></td><td class="ref-preview"></td><td>Overline (longer)</td></tr>
+      <tr><td><code>\hat{y}</code></td><td class="ref-preview"></td><td>Hat (estimated)</td></tr>
+    </table>
+
+    <h3 class="ref-section">Grouping</h3>
+    <table class="ref-table">
+      <tr><td><code>\left( \frac{a}{b} \right)</code></td><td class="ref-preview"></td><td>Auto-sized parentheses</td></tr>
+      <tr><td><code>\left[ x \right]</code></td><td class="ref-preview"></td><td>Auto-sized brackets</td></tr>
+    </table>
+
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="closeRefModal()">Got it</button>
     </div>
   </div>
 </div>
