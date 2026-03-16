@@ -35,6 +35,20 @@
   </div>
 </div>
 
+<!-- ===== SYNC BANNER ===== -->
+<div class="sync-banner">
+  <span class="sync-icon">🔄</span>
+  <div class="sync-text">
+    <strong>Syncing between devices?</strong>
+    <span class="sync-steps">
+      <span class="sync-step"><span class="step-num">1</span> On the device with your latest formulas, click <button class="inline-btn" onclick="exportFormulas()">↓ Export</button> — a <code>.json</code> file will download.</span>
+      <span class="sync-step"><span class="step-num">2</span> Move that file to your other device (AirDrop, iCloud, email, etc.).</span>
+      <span class="sync-step"><span class="step-num">3</span> On the other device, click <label class="inline-btn" style="cursor:pointer">↑ Import<input type="file" accept=".json" onchange="importFormulas(event)" style="display:none"></label> and select the file. Choose <em>Merge</em> to add new ones, or <em>Replace</em> to fully overwrite.</span>
+    </span>
+  </div>
+  <button class="sync-close" onclick="this.closest('.sync-banner').style.display='none'" title="Dismiss">✕</button>
+</div>
+
 <!-- ===== KANBAN BOARD ===== -->
 <main id="board" class="board"></main>
 
