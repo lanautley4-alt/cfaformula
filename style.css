@@ -146,14 +146,40 @@ header {
   background: var(--surface2);
   border: 1px solid var(--border);
   border-radius: 10px;
-  padding: 14px;
-  cursor: pointer;
+  padding: 14px 14px 14px 38px;
   transition: border-color .2s, box-shadow .2s;
   position: relative;
 }
 .formula-card:hover {
   border-color: var(--accent);
   box-shadow: 0 0 0 2px rgba(79,142,247,.15);
+}
+
+/* Drag handle */
+.drag-handle {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--border);
+  font-size: 1.1rem;
+  cursor: grab;
+  line-height: 1;
+  user-select: none;
+  transition: color .15s;
+}
+.formula-card:hover .drag-handle { color: var(--text-dim); }
+.drag-handle:active { cursor: grabbing; }
+
+/* SortableJS states */
+.card-ghost {
+  opacity: .35;
+  background: var(--surface);
+  border: 2px dashed var(--accent);
+}
+.card-chosen {
+  box-shadow: 0 8px 32px rgba(0,0,0,.5);
+  border-color: var(--accent);
 }
 .card-title {
   font-size: .9rem;
@@ -365,10 +391,16 @@ header {
 .fc-tap { font-size: .75rem; color: var(--text-dim); margin-top: 14px; }
 
 .fc-formula-display {
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   overflow-x: auto;
-  width: 100%;
+  max-width: 100%;
   text-align: center;
+  padding: 8px 0;
+}
+/* Make MathJax output inside the card scale nicely */
+.fc-formula-display mjx-container {
+  max-width: 100%;
+  overflow-x: auto;
 }
 .fc-desc {
   font-size: .82rem;
