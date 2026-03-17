@@ -18,6 +18,7 @@ const CFA_CATEGORIES = [
 
 // ── Storage helpers ───────────────────────────────────────────
 const STORAGE_KEY = 'cfa_formulas_v2';
+const DRAFT_KEY   = 'cfa_formula_draft';
 
 function load() {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
@@ -26,6 +27,21 @@ function load() {
 
 function save(data) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function saveDraft() {
+  if (editingId) return; // only draft new cards
+  localStorage.setItem(DRAFT_KEY, JSON.stringify({
+    title:    document.getElementById('fTitle').value,
+    category: document.getElementById('fCategory').value,
+    custom:   document.getElementById('fCategoryCustom').value,
+    formula:  document.getElementById('fFormula').value,
+    desc:     document.getElementById('fDesc').value,
+  }));
+}
+
+function clearDraft() {
+  localStorage.removeItem(DRAFT_KEY);
 }
 
 let formulas = load();
@@ -239,13 +255,14 @@ let previewTimer = null;
 function openAddModal() {
   editingId = null;
   document.getElementById('modalTitle').textContent = 'New Formula';
-  document.getElementById('fTitle').value    = '';
-  document.getElementById('fCategory').value = '';
-  document.getElementById('fCategoryCustom').value = '';
-  document.getElementById('fCategoryCustom').classList.add('hidden');
-  document.getElementById('fFormula').value  = '';
-  document.getElementById('fDesc').value     = '';
-  document.getElementById('previewContent').innerHTML = '';
+  const draft = (() => { try { return JSON.parse(localStorage.getItem(DRAFT_KEY)) || {}; } catch { return {}; } })();
+  document.getElementById('fTitle').value    = draft.title    || '';
+  document.getElementById('fCategory').value = draft.category || '';
+  document.getElementById('fCategoryCustom').value = draft.custom || '';
+  document.getElementById('fCategoryCustom').classList.toggle('hidden', !draft.custom);
+  document.getElementById('fFormula').value  = draft.formula  || '';
+  document.getElementById('fDesc').value     = draft.desc     || '';
+  document.getElementById('previewContent').innerHTML = draft.formula ? renderLines(draft.formula) : '';
   document.getElementById('formulaModal').classList.remove('hidden');
   document.getElementById('fTitle').focus();
 }
@@ -286,6 +303,7 @@ function saveFormula() {
   }
 
   save(formulas);
+  clearDraft();
   closeModal();
   renderBoard();
 }
@@ -309,6 +327,9 @@ function updatePreview() {
 
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('fFormula').addEventListener('input', updatePreview);
+  ['fTitle', 'fCategory', 'fCategoryCustom', 'fFormula', 'fDesc'].forEach(id => {
+    document.getElementById(id).addEventListener('input', saveDraft);
+  });
   renderBoard();
 });
 
