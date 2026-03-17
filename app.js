@@ -151,7 +151,7 @@ function cardHTML(f) {
       <div class="drag-handle" title="Drag to move" onclick="event.stopPropagation()">⠿</div>
       <div class="card-title">${esc(f.title)}<span class="card-chevron">›</span></div>
       <div class="card-body">
-        <div class="card-formula">${renderLines(f.formula)}</div>
+        ${f.formula ? `<div class="card-formula">${renderLines(f.formula)}</div>` : ''}
         ${f.desc ? `<div class="card-desc">${f.desc.split('\n').map(esc).join('<br>')}</div>` : ''}
         <div class="card-actions">
           <button class="btn btn-ghost" onclick="editFormula('${f.id}'); event.stopPropagation()">Edit</button>
@@ -291,9 +291,9 @@ function saveFormula() {
   const formula  = document.getElementById('fFormula').value.trim();
   const desc     = document.getElementById('fDesc').value.trim();
 
-  if (!title)    { alert('Please enter a title.'); return; }
-  if (!category) { alert('Please select a category.'); return; }
-  if (!formula)  { alert('Please enter a formula.'); return; }
+  if (!title)           { alert('Please enter a title.'); return; }
+  if (!category)        { alert('Please select a category.'); return; }
+  if (!formula && !desc){ alert('Please enter a formula or description.'); return; }
 
   if (editingId) {
     const idx = formulas.findIndex(f => f.id === editingId);
@@ -403,10 +403,15 @@ function showCard() {
   // Front
   document.getElementById('fcTitle').textContent = f.title;
 
-  // Back — render math immediately (no async needed)
+  // Back — if no formula, show desc as main content
   const formulaEl = document.getElementById('fcFormula');
-  formulaEl.innerHTML = renderLines(f.formula);
-  document.getElementById('fcDesc').innerHTML = (f.desc || '').split('\n').map(esc).join('<br>');
+  if (f.formula) {
+    formulaEl.innerHTML = renderLines(f.formula);
+    document.getElementById('fcDesc').innerHTML = (f.desc || '').split('\n').map(esc).join('<br>');
+  } else {
+    formulaEl.innerHTML = '';
+    document.getElementById('fcDesc').innerHTML = (f.desc || '').split('\n').map(esc).join('<br>');
+  }
 
   // Progress
   document.getElementById('fcCounter').textContent    = `${fcIndex + 1} / ${fcDeck.length}`;
