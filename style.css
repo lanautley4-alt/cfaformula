@@ -155,32 +155,6 @@ header {
   box-shadow: 0 0 0 2px rgba(79,142,247,.15);
 }
 
-/* Drag handle */
-.drag-handle {
-  position: absolute;
-  left: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--border);
-  font-size: 1.1rem;
-  cursor: grab;
-  line-height: 1;
-  user-select: none;
-  transition: color .15s;
-}
-.formula-card:hover .drag-handle { color: var(--text-dim); }
-.drag-handle:active { cursor: grabbing; }
-
-/* SortableJS states */
-.card-ghost {
-  opacity: .35;
-  background: var(--surface);
-  border: 2px dashed var(--accent);
-}
-.card-chosen {
-  box-shadow: 0 8px 32px rgba(0,0,0,.5);
-  border-color: var(--accent);
-}
 .formula-card { cursor: pointer; }
 .card-title {
   font-size: .9rem;

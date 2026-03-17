@@ -138,7 +138,6 @@ function renderBoard() {
   `).join('');
 
   renderFilters();
-  initSortable();
 }
 
 function renderLines(text) {
@@ -148,7 +147,6 @@ function renderLines(text) {
 function cardHTML(f) {
   return `
     <div class="formula-card" id="card-${f.id}" data-id="${f.id}" onclick="toggleCard(this)">
-      <div class="drag-handle" title="Drag to move" onclick="event.stopPropagation()">⠿</div>
       <div class="card-title">${esc(f.title)}<span class="card-chevron">›</span></div>
       <div class="card-body">
         ${f.formula ? `<div class="card-formula">${renderLines(f.formula)}</div>` : ''}
@@ -165,37 +163,6 @@ function toggleCard(el) {
   el.classList.toggle('expanded');
 }
 
-// ── Drag & drop ───────────────────────────────────────────────
-function initSortable() {
-  if (typeof Sortable === 'undefined') return;
-  document.querySelectorAll('.column-cards').forEach(container => {
-    new Sortable(container, {
-      group:       'formulas',
-      animation:   150,
-      handle:      '.drag-handle',
-      ghostClass:  'card-ghost',
-      chosenClass: 'card-chosen',
-      onEnd(evt) {
-        const formulaId = evt.item.dataset.id;
-        const newCat    = evt.to.dataset.category;
-        const formula   = formulas.find(f => f.id === formulaId);
-        if (formula && newCat && formula.category !== newCat) {
-          formula.category = newCat;
-        }
-        // Rebuild formulas array in DOM order so position is persisted
-        const ordered = [];
-        document.querySelectorAll('.formula-card').forEach(card => {
-          const f = formulas.find(x => x.id === card.dataset.id);
-          if (f) ordered.push(f);
-        });
-        // Keep any formulas not currently visible (filtered out) at the end
-        formulas.forEach(f => { if (!ordered.includes(f)) ordered.push(f); });
-        formulas = ordered;
-        save(formulas);
-      }
-    });
-  });
-}
 
 // ── Filters ───────────────────────────────────────────────────
 function renderFilters() {
