@@ -14,7 +14,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-180.png" />
   <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="style.css?v=1" />
+  <link rel="stylesheet" href="style.css?v=2" />
 </head>
 <body>
 
@@ -109,7 +109,7 @@
 
   <section class="card">
     <div class="card-head"><h2>Program</h2></div>
-    <p class="subtle">Reset brings back the default 5-day plan (Heavy Legs, Back &amp; Handstand, Conditioning, Glutes &amp; Hamstrings, Push Press). Your logged history is kept.</p>
+    <p class="subtle">Reset brings back the default alternating Week A / Week B plan (squats, deadlifts, RDLs, cleans &amp; jerks + accessories). Your logged history is kept.</p>
     <div class="btn-row">
       <button class="btn-outline danger" onclick="resetProgram()">Reset program to default</button>
     </div>
@@ -117,7 +117,7 @@
 
   <section class="card">
     <div class="card-head"><h2>About</h2></div>
-    <p class="subtle">Built for: leg growth · lean &amp; toned · handstands · strong lats &amp; back · tight waist. No arm isolation — compounds only. 45–50 min sessions.</p>
+    <p class="subtle">Built for: leg growth · lean &amp; toned · strong lats &amp; back · tight waist · full-body barbell compounds (squat, deadlift, clean &amp; jerk) with a touch of handstand skill. No arm isolation. Two alternating weeks (A/B) for variety. 45–50 min sessions.</p>
   </section>
   <div class="bottom-spacer"></div>
 </main>
@@ -142,7 +142,7 @@
   <div class="sheet">
     <div class="sheet-handle"></div>
     <h2 id="swapTitle">Swap exercise</h2>
-    <p class="subtle">Alternatives that hit the same muscles:</p>
+    <input id="swapSearch" type="text" placeholder="Search all exercises…" oninput="renderSwapList()" />
     <div id="swapList" class="swap-list"></div>
     <div class="swap-scope">
       <label><input type="radio" name="swapScope" value="today" checked /> Just today</label>
@@ -224,9 +224,9 @@
   </div>
 </div>
 
-<script src="js/data.js?v=1"></script>
+<script src="js/data.js?v=2"></script>
 <script src="js/progression.js?v=1"></script>
-<script src="js/app.js?v=2"></script>
+<script src="js/app.js?v=3"></script>
 <script>
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 </script>

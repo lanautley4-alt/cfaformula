@@ -292,6 +292,18 @@ canvas { width: 100%; height: auto; }
 .sheet .btn-accent { margin-top: 18px; }
 
 .swap-list { margin-top: 10px; }
+#swapSearch { margin-top: 12px; }
+.swap-section {
+  color: var(--muted); font-size: 10.5px; font-weight: 800;
+  letter-spacing: 0.08em; text-transform: uppercase; margin: 16px 4px 4px;
+}
+.swap-group { border-bottom: 1px solid var(--border); }
+.swap-group summary {
+  padding: 10px 8px; color: var(--text); font-size: 13.5px;
+  cursor: pointer; text-transform: capitalize; list-style: none;
+}
+.swap-group summary::before { content: '▸ '; color: var(--muted); font-size: 11px; }
+.swap-group[open] summary::before { content: '▾ '; }
 .swap-item {
   display: flex; align-items: center; gap: 10px;
   padding: 12px 10px; border-radius: 12px; cursor: pointer;
