@@ -443,8 +443,27 @@ function openSwap(dateStr, blockId, itemIdx) {
 
   document.getElementById('swapTitle').textContent = 'Swap ' + current.name;
   document.getElementById('swapSearch').value = '';
+  document.getElementById('swapNewName').value = '';
+  document.getElementById('swapCreate').open = false;
   renderSwapList();
   document.getElementById('swapSheet').classList.remove('hidden');
+}
+
+function confirmCreateAndSwap() {
+  const name = document.getElementById('swapNewName').value.trim();
+  if (!name) { alert('Give the exercise a name first.'); return; }
+  const exId = 'custom-' + Date.now();
+  customs.push({
+    id: exId,
+    name,
+    pattern: 'custom',
+    muscles: [document.getElementById('swapNewMuscle').value],
+    equip: 'custom',
+    load: document.getElementById('swapNewLoad').value,
+    inc: 5,
+  });
+  saveCustoms();
+  confirmSwap(exId);
 }
 
 // Relevance to the current exercise's focus: same movement pattern and
@@ -484,9 +503,9 @@ function renderSwapList() {
 
     const groups = {};
     for (const e of all) (groups[e.muscles[0]] = groups[e.muscles[0]] || []).push(e);
-    html += `<div class="swap-section">Browse all · ${all.length} exercises</div>`;
+    html += `<div class="swap-section">All exercises · ${all.length}</div>`;
     for (const m of Object.keys(groups).sort()) {
-      html += `<details class="swap-group"><summary>${m} <span class="subtle">${groups[m].length}</span></summary>
+      html += `<details class="swap-group" open><summary>${m} <span class="subtle">${groups[m].length}</span></summary>
         ${groups[m].sort((a, b) => a.name.localeCompare(b.name)).map(row).join('')}</details>`;
     }
   }

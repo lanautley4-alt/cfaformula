@@ -14,7 +14,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-180.png" />
   <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="style.css?v=2" />
+  <link rel="stylesheet" href="style.css?v=3" />
 </head>
 <body>
 
@@ -142,12 +142,40 @@
   <div class="sheet">
     <div class="sheet-handle"></div>
     <h2 id="swapTitle">Swap exercise</h2>
-    <input id="swapSearch" type="text" placeholder="Search all exercises…" oninput="renderSwapList()" />
-    <div id="swapList" class="swap-list"></div>
     <div class="swap-scope">
       <label><input type="radio" name="swapScope" value="today" checked /> Just today</label>
       <label><input type="radio" name="swapScope" value="always" /> From now on</label>
     </div>
+    <input id="swapSearch" type="text" placeholder="Search all exercises…" oninput="renderSwapList()" />
+
+    <details id="swapCreate">
+      <summary>＋ Create a new exercise to swap in</summary>
+      <label>Name</label>
+      <input id="swapNewName" type="text" placeholder="e.g. Landmine Squat" />
+      <div class="grid-2">
+        <div>
+          <label>Main muscle</label>
+          <select id="swapNewMuscle">
+            <option value="quads">Quads</option><option value="glutes">Glutes</option>
+            <option value="hamstrings">Hamstrings</option><option value="calves">Calves</option>
+            <option value="lats">Lats</option><option value="back">Back</option>
+            <option value="shoulders">Shoulders</option><option value="core">Core</option>
+            <option value="obliques">Obliques</option><option value="cardio">Cardio</option>
+          </select>
+        </div>
+        <div>
+          <label>Type</label>
+          <select id="swapNewLoad">
+            <option value="weight">Weighted (lbs)</option>
+            <option value="bw">Bodyweight</option>
+            <option value="time">Timed (seconds)</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn-accent wide" onclick="confirmCreateAndSwap()">Create &amp; swap to it</button>
+    </details>
+
+    <div id="swapList" class="swap-list"></div>
   </div>
 </div>
 
@@ -226,7 +254,7 @@
 
 <script src="js/data.js?v=2"></script>
 <script src="js/progression.js?v=1"></script>
-<script src="js/app.js?v=3"></script>
+<script src="js/app.js?v=4"></script>
 <script>
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 </script>

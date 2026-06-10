@@ -312,7 +312,9 @@ canvas { width: 100%; height: auto; }
 .swap-item:active, .swap-item:hover { background: var(--panel-2); }
 .swap-item strong { flex: 1; font-size: 14px; font-weight: 600; }
 .swap-item .tag { font-size: 10.5px; color: var(--muted); background: var(--panel-2); border-radius: 6px; padding: 3px 7px; }
-.swap-scope { display: flex; gap: 18px; margin-top: 14px; color: var(--muted); font-size: 13px; }
+.swap-scope { display: flex; gap: 18px; margin-top: 10px; color: var(--muted); font-size: 13px; }
+#swapCreate summary { color: var(--accent); font-size: 13px; cursor: pointer; margin-top: 14px; list-style: none; }
+#swapCreate .btn-accent { margin-top: 14px; }
 .swap-scope input { accent-color: var(--accent); margin-right: 5px; }
 
 select { appearance: none; -webkit-appearance: none; }
