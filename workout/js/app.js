@@ -4,7 +4,7 @@
 
 // ── Storage ───────────────────────────────────────────────────
 const K_SETTINGS = 'wt_settings';
-const K_PROGRAM  = 'wt_program_v1';
+const K_PROGRAM  = 'wt_program_v2';
 const K_LOGS     = 'wt_logs';
 const K_CUSTOM   = 'wt_custom_exercises';
 
@@ -16,8 +16,19 @@ function lsSet(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
 
 let settings = lsGet(K_SETTINGS, { restTimer: true, autoProgress: true });
 let program  = lsGet(K_PROGRAM, null) || structuredClone(DEFAULT_PROGRAM);
+if (!program.weeks) program = structuredClone(DEFAULT_PROGRAM); // pre-A/B format
 let logs     = lsGet(K_LOGS, {});
 let customs  = lsGet(K_CUSTOM, []);
+
+// ── Week A/B rotation ─────────────────────────────────────────
+function weekIndexFor(date) {
+  const anchor = mondayOf(new Date(EPOCH_MONDAY + 'T12:00'));
+  const wk = Math.round((mondayOf(date) - anchor) / (7 * 864e5));
+  const n = program.weeks.length;
+  return ((wk % n) + n) % n;
+}
+function dayFor(date) { return program.weeks[weekIndexFor(date)][date.getDay()]; }
+function weekLabel(date) { return 'WEEK ' + String.fromCharCode(65 + weekIndexFor(date)); }
 
 function saveProgram() { lsSet(K_PROGRAM, program); }
 function saveLogs()    { lsSet(K_LOGS, logs); }
@@ -62,13 +73,15 @@ function resolveEx(dateStr, block, itemIdx) {
 }
 
 // ── History & suggestions ─────────────────────────────────────
-// History is resolved through block ids (unique across the whole program),
-// so moving a workout to a different day keeps all its history intact.
+// Each logged set is stamped with its exercise id (log.ex), so history
+// survives program redesigns, moves, and swaps. blockMap is the fallback
+// for sets logged before stamping existed.
 function blockMap() {
   const map = {};
-  for (const day of Object.values(program))
-    for (const block of (day.blocks || []))
-      if (block.items) map[block.id] = block;
+  for (const week of program.weeks)
+    for (const day of Object.values(week))
+      for (const block of (day.blocks || []))
+        if (block.items) map[block.id] = block;
   return map;
 }
 
@@ -78,17 +91,61 @@ function exerciseHistory(exId) {
   for (const [date, log] of Object.entries(logs)) {
     if (!log.sets) continue;
     for (const [key, sets] of Object.entries(log.sets)) {
-      const [blockId, idxStr] = key.split('|');
-      const block = blocks[blockId];
-      const item = block && block.items[Number(idxStr)];
-      if (!item) continue;
-      const actualId = (log.swaps && log.swaps[key]) || item.ex;
-      if (actualId !== exId) continue;
-      if (sets.some(s => s && s.done)) out.push({ date, sets, targetReps: item.reps });
+      let id, targetReps;
+      const stamp = log.ex && log.ex[key];
+      if (stamp) {
+        id = stamp.id; targetReps = stamp.reps;
+      } else {
+        const [blockId, idxStr] = key.split('|');
+        const block = blocks[blockId];
+        const item = block && block.items[Number(idxStr)];
+        if (!item) continue;
+        id = (log.swaps && log.swaps[key]) || item.ex;
+        targetReps = item.reps;
+      }
+      if (id !== exId) continue;
+      if (sets.some(s => s && s.done)) out.push({ date, sets, targetReps });
     }
   }
   return out.sort((a, b) => a.date.localeCompare(b.date));
 }
+
+function stampLog(log, key, exId, targetReps) {
+  if (!log.ex) log.ex = {};
+  log.ex[key] = { id: exId, reps: targetReps };
+}
+
+// One-time migration: stamp pre-v2 logs with exercise ids so history
+// survives the program overhaul. Resolution order: user's stored v1
+// program → legacy default map → current program blocks.
+(function migrateLogs() {
+  const oldProg = lsGet('wt_program_v1', null);
+  const blocks = blockMap();
+  let changed = false;
+  for (const log of Object.values(logs)) {
+    if (!log.sets) continue;
+    if (!log.ex) log.ex = {};
+    for (const key of Object.keys(log.sets)) {
+      if (log.ex[key]) continue;
+      const [blockId, idxStr] = key.split('|');
+      const i = Number(idxStr);
+      let item = null;
+      if (oldProg) {
+        for (const day of Object.values(oldProg)) {
+          const b = (day.blocks || []).find(b => b.id === blockId);
+          if (b && b.items && b.items[i]) { item = b.items[i]; break; }
+        }
+      }
+      if (!item && LEGACY_BLOCKS[blockId] && LEGACY_BLOCKS[blockId][i]) item = LEGACY_BLOCKS[blockId][i];
+      if (!item && blocks[blockId] && blocks[blockId].items[i]) item = blocks[blockId].items[i];
+      if (item) {
+        log.ex[key] = { id: (log.swaps && log.swaps[key]) || item.ex, reps: item.reps };
+        changed = true;
+      }
+    }
+  }
+  if (changed) saveLogs();
+})();
 
 function suggestionFor(dateStr, block, itemIdx) {
   const item = block.items[itemIdx];
@@ -121,7 +178,7 @@ function selectDate(dateStr) {
 
 function dayCompletion(dateStr) {
   // returns {total, done} counting working sets in non-skipped blocks
-  const day = program[new Date(dateStr + 'T12:00').getDay()];
+  const day = dayFor(new Date(dateStr + 'T12:00'));
   if (!day || day.rest || !day.blocks.length) return { total: 0, done: 0 };
   const log = dayLog(dateStr);
   let total = 0, done = 0;
@@ -141,7 +198,7 @@ function renderSchedule() {
   const today = iso(new Date());
   const monday = mondayOf(selectedDate);
   const sunday = addDays(monday, 6);
-  const day = program[selectedDate.getDay()];
+  const day = dayFor(selectedDate);
   const log = dayLog(dateStr);
 
   document.getElementById('dayTitle').textContent =
@@ -153,7 +210,7 @@ function renderSchedule() {
   for (let i = 0; i < 7; i++) {
     const d = addDays(monday, i);
     const ds = iso(d);
-    const pd = program[d.getDay()];
+    const pd = dayFor(d);
     const isTrain = pd && !pd.rest && pd.blocks.length;
     const c = dayCompletion(ds);
     const dotClass = !isTrain ? 'none' : (c.total && c.done >= c.total ? 'done' : '');
@@ -166,6 +223,7 @@ function renderSchedule() {
   const c = dayCompletion(dateStr);
   const isDone = c.total > 0 && c.done >= c.total;
   let head = `<h2>${day.name}</h2><span class="focus">${day.focus}</span>`;
+  head += `<span class="pill">${weekLabel(selectedDate)}</span>`;
   if (day.minutes) head += `<span class="pill time">~${day.minutes}m</span>`;
   if (isDone) head += `<span class="pill done">DONE</span>`;
   head += `<button class="link-btn" onclick="openMove()">move</button>`;
@@ -235,8 +293,9 @@ function renderExercise(dateStr, block, itemIdx, log) {
   for (let s = 0; s < item.sets; s++) {
     const sl = logged[s] || {};
     const done = !!sl.done;
-    const wVal = sl.weight !== undefined ? sl.weight : sug.weight;
-    const rVal = sl.reps !== undefined ? sl.reps : sug.reps;
+    const pf = prefillFor(logged, s, sug);
+    const wVal = pf.weight;
+    const rVal = pf.reps;
     const weightField = (isBW || isTime)
       ? `<div class="set-field"><input value="BW" disabled /><span class="unit">&nbsp;</span></div>`
       : `<div class="set-field"><input type="number" inputmode="decimal" value="${wVal}" step="2.5" min="0"
@@ -270,8 +329,25 @@ function ensureSets(log, key, n) {
   return log.sets[key];
 }
 
+// What a set's inputs should show: an explicit logged value wins; otherwise
+// the most recent weight/reps the user typed into an earlier set today;
+// otherwise the progression suggestion.
+function prefillFor(logged, setIdx, sug) {
+  let w = sug.weight, r = sug.reps;
+  for (let i = 0; i < setIdx; i++) {
+    const sl = logged[i] || {};
+    if (sl.weight !== undefined) w = sl.weight;
+    if (sl.reps !== undefined) r = sl.reps;
+  }
+  const own = logged[setIdx] || {};
+  return {
+    weight: own.weight !== undefined ? own.weight : w,
+    reps:   own.reps   !== undefined ? own.reps   : r,
+  };
+}
+
 function toggleSet(dateStr, blockId, itemIdx, setIdx) {
-  const day = program[new Date(dateStr + 'T12:00').getDay()];
+  const day = dayFor(new Date(dateStr + 'T12:00'));
   const block = day.blocks.find(b => b.id === blockId);
   const item = block.items[itemIdx];
   const key = setKey(blockId, itemIdx);
@@ -283,9 +359,12 @@ function toggleSet(dateStr, blockId, itemIdx, setIdx) {
     s.done = false;
   } else {
     const sug = suggestionFor(dateStr, block, itemIdx);
-    if (s.weight === undefined) s.weight = sug.weight;
-    if (s.reps === undefined) s.reps = sug.reps;
+    const pf = prefillFor(sets, setIdx, sug);
+    if (s.weight === undefined) s.weight = pf.weight;
+    if (s.reps === undefined) s.reps = pf.reps;
     s.done = true;
+    const ex = resolveEx(dateStr, block, itemIdx);
+    if (ex) stampLog(log, key, ex.id, item.reps);
     // rest is between rounds — only start the timer once every exercise
     // in the block has this round's set checked off
     const roundDone = block.items.every((it, i) => {
@@ -303,7 +382,14 @@ function logField(dateStr, key, setIdx, field, value) {
   const log = dayLog(dateStr, true);
   const sets = ensureSets(log, key, setIdx + 1);
   sets[setIdx][field] = Number(value) || 0;
+  const block = blockMap()[key.split('|')[0]];
+  if (block) {
+    const itemIdx = Number(key.split('|')[1]);
+    const ex = resolveEx(dateStr, block, itemIdx);
+    if (ex && block.items[itemIdx]) stampLog(log, key, ex.id, block.items[itemIdx].reps);
+  }
   saveLogs();
+  renderSchedule(); // typed values cascade to the later sets immediately
 }
 
 function toggleWarmup(dateStr, blockId, stepIdx) {
@@ -350,30 +436,67 @@ function stopRest() {
 // ── Swap ──────────────────────────────────────────────────────
 let swapCtx = null;
 function openSwap(dateStr, blockId, itemIdx) {
-  const day = program[new Date(dateStr + 'T12:00').getDay()];
+  const day = dayFor(new Date(dateStr + 'T12:00'));
   const block = day.blocks.find(b => b.id === blockId);
   const current = resolveEx(dateStr, block, itemIdx);
-  swapCtx = { dateStr, blockId, itemIdx };
+  swapCtx = { dateStr, blockId, itemIdx, current };
 
   document.getElementById('swapTitle').textContent = 'Swap ' + current.name;
-  const prim = current.muscles[0];
-  const alts = allExercises().filter(e =>
-    e.id !== current.id &&
-    (e.pattern === current.pattern || e.muscles[0] === prim)
-  );
-  document.getElementById('swapList').innerHTML = alts.map(e => `
-    <div class="swap-item" onclick="confirmSwap('${e.id}')">
+  document.getElementById('swapSearch').value = '';
+  renderSwapList();
+  document.getElementById('swapSheet').classList.remove('hidden');
+}
+
+// Relevance to the current exercise's focus: same movement pattern and
+// same primary muscle rank highest, then pattern, then shared muscles.
+function swapScore(cur, e) {
+  let score = 0;
+  if (e.pattern === cur.pattern) score += 50;
+  if (e.muscles[0] === cur.muscles[0]) score += 40;
+  else if (e.muscles.some(m => cur.muscles.includes(m))) score += 20;
+  return score;
+}
+
+function renderSwapList() {
+  const cur = swapCtx.current;
+  const q = document.getElementById('swapSearch').value.trim().toLowerCase();
+  const all = allExercises().filter(e => e.id !== cur.id);
+  const row = e => `<div class="swap-item" onclick="confirmSwap('${e.id}')">
       <strong>${e.name}</strong>
       <span class="tag">${e.muscles[0]}</span>
       <span class="tag">${e.equip}</span>
-    </div>`).join('') || '<p class="subtle">No alternatives found — add one with ＋ Add exercise.</p>';
-  document.getElementById('swapSheet').classList.remove('hidden');
+    </div>`;
+
+  let html = '';
+  if (q) {
+    const hits = all
+      .filter(e => e.name.toLowerCase().includes(q) ||
+                   e.muscles.some(m => m.includes(q)) ||
+                   e.pattern.includes(q) || e.equip.includes(q))
+      .sort((a, b) => swapScore(cur, b) - swapScore(cur, a));
+    html = hits.map(row).join('') || '<p class="subtle">No matches — try a muscle name like "glutes" or "lats".</p>';
+  } else {
+    const rec = all.filter(e => swapScore(cur, e) > 0)
+      .sort((a, b) => swapScore(cur, b) - swapScore(cur, a))
+      .slice(0, 8);
+    html += '<div class="swap-section">Recommended for this slot</div>';
+    html += rec.map(row).join('') || '<p class="subtle">No close matches — browse everything below.</p>';
+
+    const groups = {};
+    for (const e of all) (groups[e.muscles[0]] = groups[e.muscles[0]] || []).push(e);
+    html += `<div class="swap-section">Browse all · ${all.length} exercises</div>`;
+    for (const m of Object.keys(groups).sort()) {
+      html += `<details class="swap-group"><summary>${m} <span class="subtle">${groups[m].length}</span></summary>
+        ${groups[m].sort((a, b) => a.name.localeCompare(b.name)).map(row).join('')}</details>`;
+    }
+  }
+  document.getElementById('swapList').innerHTML = html;
 }
 
 function confirmSwap(newExId) {
   const { dateStr, blockId, itemIdx } = swapCtx;
   const scope = document.querySelector('input[name="swapScope"]:checked').value;
-  const day = program[new Date(dateStr + 'T12:00').getDay()];
+  const day = dayFor(new Date(dateStr + 'T12:00'));
   const block = day.blocks.find(b => b.id === blockId);
 
   if (scope === 'always') {
@@ -405,7 +528,7 @@ function openAddExercise(blockId) {
 }
 
 function confirmAddExercise() {
-  const day = program[selectedDate.getDay()];
+  const day = dayFor(selectedDate);
   const block = day.blocks.find(b => b.id === addCtx.blockId);
   if (!block) return;
 
@@ -446,7 +569,7 @@ function openAddBlock() {
 }
 
 function confirmAddBlock() {
-  const day = program[selectedDate.getDay()];
+  const day = dayFor(selectedDate);
   const name = document.getElementById('newBlockName').value.trim() || 'New Block';
   day.blocks.push({
     id: 'blk-' + Date.now(),
@@ -468,18 +591,22 @@ function closeSheets() {
 }
 
 // ── Move workout to another day ───────────────────────────────
+// Operates on the week variant (A/B) that the given date falls in.
 let moveCtx = null;
-function openMove() { openMoveFor(selectedDate.getDay()); }
+function openMove() { openMoveFor(iso(selectedDate)); }
 
-function openMoveFor(dow) {
-  moveCtx = { dow };
-  document.getElementById('moveTitle').textContent = 'Move ' + program[dow].name;
+function openMoveFor(dateStr) {
+  const d = new Date(dateStr + 'T12:00');
+  moveCtx = { wi: weekIndexFor(d), dow: d.getDay() };
+  const week = program.weeks[moveCtx.wi];
+  document.getElementById('moveTitle').textContent =
+    'Move ' + week[moveCtx.dow].name + ' (' + weekLabel(d).toLowerCase().replace('w', 'W') + ')';
   const order = [1, 2, 3, 4, 5, 6, 0]; // Mon … Sun
-  document.getElementById('moveList').innerHTML = order.map(d => {
-    const p = program[d];
-    const isCur = d === dow;
-    return `<div class="swap-item" ${isCur ? 'style="opacity:0.45"' : `onclick="confirmMove(${d})"`}>
-      <strong>${DOW_FULL[d]}</strong>
+  document.getElementById('moveList').innerHTML = order.map(dw => {
+    const p = week[dw];
+    const isCur = dw === moveCtx.dow;
+    return `<div class="swap-item" ${isCur ? 'style="opacity:0.45"' : `onclick="confirmMove(${dw})"`}>
+      <strong>${DOW_FULL[dw]}</strong>
       <span class="tag">${p.name}</span>
       ${isCur ? '<span class="tag">current</span>' : ''}
     </div>`;
@@ -488,9 +615,10 @@ function openMoveFor(dow) {
 }
 
 function confirmMove(targetDow) {
-  const { dow } = moveCtx;
+  const { wi, dow } = moveCtx;
+  const week = program.weeks[wi];
   // the two days trade places, so nothing is ever lost
-  [program[dow], program[targetDow]] = [program[targetDow], program[dow]];
+  [week[dow], week[targetDow]] = [week[targetDow], week[dow]];
   saveProgram();
   closeSheets();
   renderSchedule();
@@ -503,13 +631,14 @@ function shiftWeek(n) { weekOffset += n; renderWeek(); }
 function renderWeek() {
   const monday = addDays(mondayOf(new Date()), weekOffset * 7);
   const today = iso(new Date());
-  document.getElementById('weekRange2').textContent = fmtShort(monday) + ' – ' + fmtShort(addDays(monday, 6));
+  document.getElementById('weekRange2').textContent =
+    fmtShort(monday) + ' – ' + fmtShort(addDays(monday, 6)) + ' · ' + weekLabel(monday);
 
   let html = '';
   for (let i = 0; i < 7; i++) {
     const d = addDays(monday, i);
     const ds = iso(d);
-    const day = program[d.getDay()];
+    const day = dayFor(d);
     const isTrain = day && !day.rest && day.blocks.length;
     const c = dayCompletion(ds);
     const status = !isTrain ? '' :
@@ -519,7 +648,7 @@ function renderWeek() {
       <div class="wc-date"><span class="dow">${DOWS[d.getDay()]}</span><span class="dnum">${d.getDate()}</span></div>
       <div class="wc-body"><strong>${day.name}</strong><span class="subtle">${day.focus}</span></div>
       ${status}
-      <button class="link-btn" onclick="event.stopPropagation();openMoveFor(${d.getDay()})">move</button>
+      <button class="link-btn" onclick="event.stopPropagation();openMoveFor('${ds}')">move</button>
     </div>`;
   }
   document.getElementById('weekCards').innerHTML = html;
@@ -538,7 +667,7 @@ function computeStreak() {
   let d = new Date();
   for (let guard = 0; guard < 365; guard++) {
     const ds = iso(d);
-    const day = program[d.getDay()];
+    const day = dayFor(d);
     const isTrain = day && !day.rest && day.blocks.length;
     if (isTrain) {
       const c = dayCompletion(ds);
@@ -570,7 +699,7 @@ function renderProgress() {
   let doneThisWeek = 0, scheduled = 0;
   for (let i = 0; i < 7; i++) {
     const d = addDays(thisMonday, i);
-    const day = program[d.getDay()];
+    const day = dayFor(d);
     if (day && !day.rest && day.blocks.length) {
       scheduled++;
       const c = dayCompletion(iso(d));
@@ -729,7 +858,7 @@ function importData(event) {
     try {
       const data = JSON.parse(reader.result);
       if (data.settings) { settings = data.settings; lsSet(K_SETTINGS, settings); }
-      if (data.program)  { program = data.program; saveProgram(); }
+      if (data.program && data.program.weeks) { program = data.program; saveProgram(); }
       if (data.logs)     { logs = data.logs; saveLogs(); }
       if (data.customs)  { customs = data.customs; saveCustoms(); }
       alert('Backup imported ✓');
@@ -743,7 +872,7 @@ function importData(event) {
 }
 
 function resetProgram() {
-  if (!confirm('Reset your program to the default 5-day plan? Your logged history stays.')) return;
+  if (!confirm('Reset your program to the default Week A / Week B plan? Your logged history stays.')) return;
   program = structuredClone(DEFAULT_PROGRAM);
   saveProgram();
   renderSchedule();

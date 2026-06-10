@@ -1,8 +1,9 @@
 # Lift — Workout Tracker
 
 A personal workout tracker PWA: supersets, circuits, automatic progressive
-overload, and a 5-day program built for leg growth, leanness, handstand work,
-a tight waist, and a strong back — with zero arm isolation.
+overload, and two alternating 5-day weeks (A/B) built around full-body
+barbell compounds — squats, deadlifts, RDLs, hang cleans, jerks — for leg
+growth, leanness, a tight waist, and a strong back, with zero arm isolation.
 
 ## Add it to your iPhone Home Screen
 
