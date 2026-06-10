@@ -62,20 +62,29 @@ function resolveEx(dateStr, block, itemIdx) {
 }
 
 // ── History & suggestions ─────────────────────────────────────
+// History is resolved through block ids (unique across the whole program),
+// so moving a workout to a different day keeps all its history intact.
+function blockMap() {
+  const map = {};
+  for (const day of Object.values(program))
+    for (const block of (day.blocks || []))
+      if (block.items) map[block.id] = block;
+  return map;
+}
+
 function exerciseHistory(exId) {
   const out = [];
+  const blocks = blockMap();
   for (const [date, log] of Object.entries(logs)) {
     if (!log.sets) continue;
-    const day = program[new Date(date + 'T12:00').getDay()];
-    if (!day || !day.blocks) continue;
-    for (const block of day.blocks) {
-      if (!block.items) continue;
-      block.items.forEach((item, i) => {
-        const actualId = (log.swaps && log.swaps[setKey(block.id, i)]) || item.ex;
-        if (actualId !== exId) return;
-        const sets = log.sets[setKey(block.id, i)];
-        if (sets && sets.some(s => s.done)) out.push({ date, sets, targetReps: item.reps });
-      });
+    for (const [key, sets] of Object.entries(log.sets)) {
+      const [blockId, idxStr] = key.split('|');
+      const block = blocks[blockId];
+      const item = block && block.items[Number(idxStr)];
+      if (!item) continue;
+      const actualId = (log.swaps && log.swaps[key]) || item.ex;
+      if (actualId !== exId) continue;
+      if (sets.some(s => s && s.done)) out.push({ date, sets, targetReps: item.reps });
     }
   }
   return out.sort((a, b) => a.date.localeCompare(b.date));
@@ -159,6 +168,7 @@ function renderSchedule() {
   let head = `<h2>${day.name}</h2><span class="focus">${day.focus}</span>`;
   if (day.minutes) head += `<span class="pill time">~${day.minutes}m</span>`;
   if (isDone) head += `<span class="pill done">DONE</span>`;
+  head += `<button class="link-btn" onclick="openMove()">move</button>`;
   document.getElementById('dayHeader').innerHTML = head;
   document.getElementById('dayProgressFill').style.width = c.total ? (100 * c.done / c.total) + '%' : '0';
   document.getElementById('addBlockBtn').classList.toggle('hidden', !!day.rest);
@@ -453,8 +463,38 @@ function confirmAddBlock() {
 }
 
 function closeSheets() {
-  for (const id of ['swapSheet', 'addSheet', 'blockSheet'])
+  for (const id of ['swapSheet', 'addSheet', 'blockSheet', 'moveSheet'])
     document.getElementById(id).classList.add('hidden');
+}
+
+// ── Move workout to another day ───────────────────────────────
+let moveCtx = null;
+function openMove() { openMoveFor(selectedDate.getDay()); }
+
+function openMoveFor(dow) {
+  moveCtx = { dow };
+  document.getElementById('moveTitle').textContent = 'Move ' + program[dow].name;
+  const order = [1, 2, 3, 4, 5, 6, 0]; // Mon … Sun
+  document.getElementById('moveList').innerHTML = order.map(d => {
+    const p = program[d];
+    const isCur = d === dow;
+    return `<div class="swap-item" ${isCur ? 'style="opacity:0.45"' : `onclick="confirmMove(${d})"`}>
+      <strong>${DOW_FULL[d]}</strong>
+      <span class="tag">${p.name}</span>
+      ${isCur ? '<span class="tag">current</span>' : ''}
+    </div>`;
+  }).join('');
+  document.getElementById('moveSheet').classList.remove('hidden');
+}
+
+function confirmMove(targetDow) {
+  const { dow } = moveCtx;
+  // the two days trade places, so nothing is ever lost
+  [program[dow], program[targetDow]] = [program[targetDow], program[dow]];
+  saveProgram();
+  closeSheets();
+  renderSchedule();
+  renderWeek();
 }
 
 // ── Week view ─────────────────────────────────────────────────
@@ -479,6 +519,7 @@ function renderWeek() {
       <div class="wc-date"><span class="dow">${DOWS[d.getDay()]}</span><span class="dnum">${d.getDate()}</span></div>
       <div class="wc-body"><strong>${day.name}</strong><span class="subtle">${day.focus}</span></div>
       ${status}
+      <button class="link-btn" onclick="event.stopPropagation();openMoveFor(${d.getDay()})">move</button>
     </div>`;
   }
   document.getElementById('weekCards').innerHTML = html;

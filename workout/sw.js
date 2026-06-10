@@ -1,12 +1,12 @@
 /* Service worker — cache-first so the app works offline at the gym */
-const CACHE = 'lift-v1';
+const CACHE = 'lift-v2';
 const ASSETS = [
   './',
   'index.html',
   'style.css?v=1',
   'js/data.js?v=1',
   'js/progression.js?v=1',
-  'js/app.js?v=1',
+  'js/app.js?v=2',
   'manifest.webmanifest',
   'icons/icon-180.png',
   'icons/icon-192.png',

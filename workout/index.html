@@ -196,6 +196,16 @@
   </div>
 </div>
 
+<!-- ===== MOVE WORKOUT SHEET ===== -->
+<div id="moveSheet" class="sheet-overlay hidden" onclick="if(event.target===this)closeSheets()">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h2 id="moveTitle">Move workout</h2>
+    <p class="subtle">Pick a day — the two workouts trade places:</p>
+    <div id="moveList" class="swap-list"></div>
+  </div>
+</div>
+
 <!-- ===== ADD BLOCK SHEET ===== -->
 <div id="blockSheet" class="sheet-overlay hidden" onclick="if(event.target===this)closeSheets()">
   <div class="sheet">
@@ -216,7 +226,7 @@
 
 <script src="js/data.js?v=1"></script>
 <script src="js/progression.js?v=1"></script>
-<script src="js/app.js?v=1"></script>
+<script src="js/app.js?v=2"></script>
 <script>
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 </script>
