@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <title>Lift</title>
+
+  <meta name="theme-color" content="#0a0a0e" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Lift" />
+
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icons/icon-180.png" />
+  <link rel="icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="style.css?v=1" />
+</head>
+<body>
+
+<!-- ===== SCHEDULE VIEW (default) ===== -->
+<main id="view-schedule" class="view">
+  <div class="topbar">
+    <button class="icon-btn" onclick="shiftDay(-1)">&#8249;</button>
+    <div class="topbar-title">
+      <h1 id="dayTitle">Wednesday, May 20</h1>
+      <span id="weekRange" class="subtle">May 18 – May 24</span>
+    </div>
+    <button class="icon-btn" onclick="shiftDay(1)">&#8250;</button>
+  </div>
+
+  <div id="dateStrip" class="date-strip"></div>
+
+  <div id="dayHeader" class="day-header"></div>
+  <div id="dayProgress" class="day-progress"><div id="dayProgressFill"></div></div>
+
+  <div id="blocks"></div>
+
+  <button id="addBlockBtn" class="btn-outline wide" onclick="openAddBlock()">＋ Add block</button>
+  <div class="bottom-spacer"></div>
+</main>
+
+<!-- ===== WEEK VIEW ===== -->
+<main id="view-week" class="view hidden">
+  <div class="topbar">
+    <button class="icon-btn" onclick="shiftWeek(-1)">&#8249;</button>
+    <div class="topbar-title">
+      <h1>This Week</h1>
+      <span id="weekRange2" class="subtle"></span>
+    </div>
+    <button class="icon-btn" onclick="shiftWeek(1)">&#8250;</button>
+  </div>
+  <div id="weekCards"></div>
+  <div class="bottom-spacer"></div>
+</main>
+
+<!-- ===== PROGRESS VIEW ===== -->
+<main id="view-progress" class="view hidden">
+  <div class="topbar"><div class="topbar-title"><h1>Progress</h1><span class="subtle">Lift heavier. Get leaner.</span></div></div>
+
+  <div class="stat-row" id="statRow"></div>
+
+  <section class="card">
+    <div class="card-head">
+      <h2>Strength over time</h2>
+      <select id="chartExercise" onchange="renderProgress()"></select>
+    </div>
+    <canvas id="chart" width="640" height="300"></canvas>
+    <div id="chartEmpty" class="empty hidden">Complete a few workouts and your top-set weight will chart here.</div>
+  </section>
+
+  <section class="card">
+    <div class="card-head"><h2>Weekly volume <span class="subtle">(lbs lifted)</span></h2></div>
+    <canvas id="volChart" width="640" height="220"></canvas>
+  </section>
+
+  <section class="card">
+    <div class="card-head"><h2>Handstand holds</h2></div>
+    <canvas id="hsChart" width="640" height="200"></canvas>
+    <div id="hsEmpty" class="empty hidden">Log wall handstand holds and your best times will show here.</div>
+  </section>
+  <div class="bottom-spacer"></div>
+</main>
+
+<!-- ===== SETTINGS VIEW ===== -->
+<main id="view-settings" class="view hidden">
+  <div class="topbar"><div class="topbar-title"><h1>Settings</h1></div></div>
+
+  <section class="card">
+    <div class="setting-row">
+      <div><strong>Rest timer</strong><div class="subtle">Countdown after you check a set</div></div>
+      <label class="switch"><input type="checkbox" id="setRestTimer" onchange="saveSettings()" /><span></span></label>
+    </div>
+    <div class="setting-row">
+      <div><strong>Auto-progress weights</strong><div class="subtle">Suggest heavier weights when you hit all your reps</div></div>
+      <label class="switch"><input type="checkbox" id="setAutoProgress" onchange="saveSettings()" /><span></span></label>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head"><h2>Your data</h2></div>
+    <p class="subtle">Workouts are saved on this device. Export a backup if you switch phones.</p>
+    <div class="btn-row">
+      <button class="btn-outline" onclick="exportData()">Export backup</button>
+      <button class="btn-outline" onclick="document.getElementById('importFile').click()">Import backup</button>
+      <input type="file" id="importFile" accept=".json" class="hidden" onchange="importData(event)" />
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head"><h2>Program</h2></div>
+    <p class="subtle">Reset brings back the default 5-day plan (Heavy Legs, Back &amp; Handstand, Conditioning, Glutes &amp; Hamstrings, Push Press). Your logged history is kept.</p>
+    <div class="btn-row">
+      <button class="btn-outline danger" onclick="resetProgram()">Reset program to default</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head"><h2>About</h2></div>
+    <p class="subtle">Built for: leg growth · lean &amp; toned · handstands · strong lats &amp; back · tight waist. No arm isolation — compounds only. 45–50 min sessions.</p>
+  </section>
+  <div class="bottom-spacer"></div>
+</main>
+
+<!-- ===== TAB BAR ===== -->
+<nav class="tabbar">
+  <button id="tab-week"     onclick="showTab('week')"><span class="tab-ico">&#9633;</span>WEEK</button>
+  <button id="tab-schedule" class="active" onclick="showTab('schedule')"><span class="tab-ico">&#9636;</span>SCHEDULE</button>
+  <button id="tab-progress" onclick="showTab('progress')"><span class="tab-ico">&#9650;</span>PROGRESS</button>
+  <button id="tab-settings" onclick="showTab('settings')"><span class="tab-ico">&#9881;</span>SETTINGS</button>
+</nav>
+
+<!-- ===== REST TIMER BANNER ===== -->
+<div id="restBanner" class="rest-banner hidden">
+  <span>REST</span>
+  <strong id="restTime">0:60</strong>
+  <button onclick="stopRest()">skip</button>
+</div>
+
+<!-- ===== SWAP SHEET ===== -->
+<div id="swapSheet" class="sheet-overlay hidden" onclick="if(event.target===this)closeSheets()">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h2 id="swapTitle">Swap exercise</h2>
+    <p class="subtle">Alternatives that hit the same muscles:</p>
+    <div id="swapList" class="swap-list"></div>
+    <div class="swap-scope">
+      <label><input type="radio" name="swapScope" value="today" checked /> Just today</label>
+      <label><input type="radio" name="swapScope" value="always" /> From now on</label>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ADD EXERCISE SHEET ===== -->
+<div id="addSheet" class="sheet-overlay hidden" onclick="if(event.target===this)closeSheets()">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h2>Add exercise</h2>
+
+    <label>From the library</label>
+    <select id="addPick"></select>
+
+    <details id="customDetails">
+      <summary>…or create a new exercise</summary>
+      <label>Name</label>
+      <input id="newExName" type="text" placeholder="e.g. Zercher Squat" />
+      <div class="grid-2">
+        <div>
+          <label>Main muscle</label>
+          <select id="newExMuscle">
+            <option value="quads">Quads</option><option value="glutes">Glutes</option>
+            <option value="hamstrings">Hamstrings</option><option value="calves">Calves</option>
+            <option value="lats">Lats</option><option value="back">Back</option>
+            <option value="shoulders">Shoulders</option><option value="core">Core</option>
+            <option value="obliques">Obliques</option><option value="cardio">Cardio</option>
+          </select>
+        </div>
+        <div>
+          <label>Type</label>
+          <select id="newExLoad">
+            <option value="weight">Weighted (lbs)</option>
+            <option value="bw">Bodyweight</option>
+            <option value="time">Timed (seconds)</option>
+          </select>
+        </div>
+      </div>
+    </details>
+
+    <div class="grid-3">
+      <div><label>Sets</label><input id="addSets" type="number" value="3" min="1" max="10" /></div>
+      <div><label>Reps</label><input id="addReps" type="number" value="10" min="1" max="500" /></div>
+      <div><label>Weight</label><input id="addWeight" type="number" value="0" min="0" step="2.5" /></div>
+    </div>
+
+    <button class="btn-accent wide" onclick="confirmAddExercise()">Add to workout</button>
+  </div>
+</div>
+
+<!-- ===== MOVE WORKOUT SHEET ===== -->
+<div id="moveSheet" class="sheet-overlay hidden" onclick="if(event.target===this)closeSheets()">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h2 id="moveTitle">Move workout</h2>
+    <p class="subtle">Pick a day — the two workouts trade places:</p>
+    <div id="moveList" class="swap-list"></div>
+  </div>
+</div>
+
+<!-- ===== ADD BLOCK SHEET ===== -->
+<div id="blockSheet" class="sheet-overlay hidden" onclick="if(event.target===this)closeSheets()">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h2>Add block</h2>
+    <label>Name</label>
+    <input id="newBlockName" type="text" placeholder="e.g. Glute Burnout" />
+    <div class="grid-3">
+      <div><label>Type</label>
+        <select id="newBlockType"><option value="superset">Superset</option><option value="circuit">Circuit</option></select>
+      </div>
+      <div><label>Rounds</label><input id="newBlockRounds" type="number" value="3" min="1" max="10" /></div>
+      <div><label>Rest (s)</label><input id="newBlockRest" type="number" value="60" min="0" max="300" step="15" /></div>
+    </div>
+    <button class="btn-accent wide" onclick="confirmAddBlock()">Add block</button>
+  </div>
+</div>
+
+<script src="js/data.js?v=1"></script>
+<script src="js/progression.js?v=1"></script>
+<script src="js/app.js?v=2"></script>
+<script>
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+</script>
+</body>
+</html>
