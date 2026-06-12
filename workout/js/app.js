@@ -7,6 +7,7 @@ const K_SETTINGS = 'wt_settings';
 const K_PROGRAM  = 'wt_program_v2';
 const K_LOGS     = 'wt_logs';
 const K_CUSTOM   = 'wt_custom_exercises';
+const K_UNITS    = 'wt_units'; // per-exercise unit overrides
 
 function lsGet(key, fallback) {
   try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
@@ -19,6 +20,7 @@ let program  = lsGet(K_PROGRAM, null) || structuredClone(DEFAULT_PROGRAM);
 if (!program.weeks) program = structuredClone(DEFAULT_PROGRAM); // pre-A/B format
 let logs     = lsGet(K_LOGS, {});
 let customs  = lsGet(K_CUSTOM, []);
+let unitOverrides = lsGet(K_UNITS, {});
 
 // ── Week A/B rotation ─────────────────────────────────────────
 function weekIndexFor(date) {
@@ -33,6 +35,7 @@ function weekLabel(date) { return 'WEEK ' + String.fromCharCode(65 + weekIndexFo
 function saveProgram() { lsSet(K_PROGRAM, program); }
 function saveLogs()    { lsSet(K_LOGS, logs); }
 function saveCustoms() { lsSet(K_CUSTOM, customs); }
+function saveUnits()   { lsSet(K_UNITS, unitOverrides); }
 
 // ── Exercise lookup ───────────────────────────────────────────
 function allExercises() { return BUILTIN_EXERCISES.concat(customs); }
@@ -74,12 +77,24 @@ function isDayDone(dateStr) {
 }
 
 // ── Units (lbs / kg) — weights are stored in lbs internally ──
+// Each exercise can have its own unit (tap the lbs/kg label on its card);
+// the Settings choice is just the default for exercises without one.
 const LB_PER_KG = 2.20462;
-function isKg() { return settings.units === 'kg'; }
-function unitLabel() { return isKg() ? 'kg' : 'lbs'; }
-function toDisplayW(lbs) { return Math.round((isKg() ? lbs / LB_PER_KG : lbs) * 2) / 2; }
-function fromDisplayW(v) { return isKg() ? v * LB_PER_KG : v; }
-function fmtWt(lbs) { return toDisplayW(lbs) + ' ' + unitLabel(); }
+function unitLabel(ex) {
+  if (ex && unitOverrides[ex.id]) return unitOverrides[ex.id];
+  return settings.units || 'lbs';
+}
+function isKg(ex) { return unitLabel(ex) === 'kg'; }
+function toDisplayW(lbs, ex) { return Math.round((isKg(ex) ? lbs / LB_PER_KG : lbs) * 2) / 2; }
+function fromDisplayW(v, ex) { return isKg(ex) ? v * LB_PER_KG : v; }
+function fmtWt(lbs, ex) { return toDisplayW(lbs, ex) + ' ' + unitLabel(ex); }
+
+function toggleUnit(exId) {
+  const ex = exById(exId);
+  unitOverrides[exId] = unitLabel(ex) === 'kg' ? 'lbs' : 'kg';
+  saveUnits();
+  renderSchedule();
+}
 
 // Resolve the exercise for an item on a date (today-only swaps live in the log)
 function resolveEx(dateStr, block, itemIdx) {
@@ -308,7 +323,7 @@ function renderExercise(dateStr, block, itemIdx, log) {
   const isBW = ex.load === 'bw';
   const isTime = ex.load === 'time';
   const repUnit = ex.repUnit || (isTime ? 'sec' : 'rep');
-  const wDisplay = isBW || isTime ? 'BW' : toDisplayW(sug.weight || 0) + unitLabel();
+  const wDisplay = isBW || isTime ? 'BW' : toDisplayW(sug.weight || 0, ex) + unitLabel(ex);
   const rx = `${item.sets}×${item.reps} @ ${wDisplay}` + (item.rpe ? ` <span class="rpe">RPE ${item.rpe}</span>` : '');
 
   let rows = '';
@@ -320,8 +335,8 @@ function renderExercise(dateStr, block, itemIdx, log) {
     const rVal = pf.reps;
     const weightField = (isBW || isTime)
       ? `<div class="set-field"><input value="BW" disabled /><span class="unit">&nbsp;</span></div>`
-      : `<div class="set-field"><input type="number" inputmode="decimal" value="${toDisplayW(wVal)}" step="${isKg() ? 1.25 : 2.5}" min="0"
-            onchange="logField('${dateStr}','${key}',${s},'weight',this.value)" /><span class="unit">${unitLabel()}</span></div>`;
+      : `<div class="set-field"><input type="number" inputmode="decimal" value="${toDisplayW(wVal, ex)}" step="${isKg(ex) ? 1.25 : 2.5}" min="0"
+            onchange="logField('${dateStr}','${key}',${s},'weight',this.value)" /><span class="unit">${unitLabel(ex)}</span></div>`;
     rows += `<div class="set-row">
       <button class="set-check ${done ? 'done' : ''}" onclick="toggleSet('${dateStr}','${block.id}',${itemIdx},${s})"></button>
       <span class="set-label">Set ${s + 1} — ${item.reps} ${repUnit === 'rep' ? 'reps' : repUnit}${item.rpe ? ` <span class="rpe">RPE ${item.rpe}</span>` : ''}</span>
@@ -336,6 +351,7 @@ function renderExercise(dateStr, block, itemIdx, log) {
       <h4>${ex.name}</h4>
       <span class="ex-count">${doneCount}/${item.sets}</span>
       <span class="spacer"></span>
+      ${ex.load === 'weight' ? `<button class="link-btn" onclick="toggleUnit('${ex.id}')">${unitLabel(ex)} ⇄</button>` : ''}
       <button class="link-btn" onclick="openSwap('${dateStr}','${block.id}',${itemIdx})">swap</button>
     </div>
     <div class="ex-rx">${rx}</div>
@@ -403,15 +419,13 @@ function toggleSet(dateStr, blockId, itemIdx, setIdx) {
 function logField(dateStr, key, setIdx, field, value) {
   const log = dayLog(dateStr, true);
   const sets = ensureSets(log, key, setIdx + 1);
-  let v = Number(value) || 0;
-  if (field === 'weight') v = fromDisplayW(v); // inputs are in display units
-  sets[setIdx][field] = v;
   const block = blockMap()[key.split('|')[0]];
-  if (block) {
-    const itemIdx = Number(key.split('|')[1]);
-    const ex = resolveEx(dateStr, block, itemIdx);
-    if (ex && block.items[itemIdx]) stampLog(log, key, ex.id, block.items[itemIdx].reps);
-  }
+  const itemIdx = Number(key.split('|')[1]);
+  const ex = block ? resolveEx(dateStr, block, itemIdx) : null;
+  let v = Number(value) || 0;
+  if (field === 'weight') v = fromDisplayW(v, ex); // inputs are in the exercise's display unit
+  sets[setIdx][field] = v;
+  if (ex && block.items[itemIdx]) stampLog(log, key, ex.id, block.items[itemIdx].reps);
   saveLogs();
   renderSchedule(); // typed values cascade to the later sets immediately
 }
@@ -623,7 +637,7 @@ function confirmAddExercise() {
   const block = day.blocks.find(b => b.id === addCtx.blockId);
   if (!block) return;
 
-  let exId;
+  let exId; // weight input below is converted with this exercise's unit
   const customName = document.getElementById('newExName').value.trim();
   if (customName) {
     exId = 'custom-' + Date.now();
@@ -646,7 +660,7 @@ function confirmAddExercise() {
     sets: Number(document.getElementById('addSets').value) || 3,
     reps: Number(document.getElementById('addReps').value) || 10,
     rpe: '',
-    weight: fromDisplayW(Number(document.getElementById('addWeight').value) || 0),
+    weight: fromDisplayW(Number(document.getElementById('addWeight').value) || 0, exById(exId)),
   });
   saveProgram();
   closeSheets();
@@ -816,12 +830,13 @@ function renderProgress() {
     canvas.classList.add('hidden'); empty.classList.remove('hidden');
   } else {
     canvas.classList.remove('hidden'); empty.classList.add('hidden');
+    const chartEx = exById(sel.value);
     const hist = exerciseHistory(sel.value);
     const points = hist.map(h => ({
       x: h.date,
-      y: toDisplayW(Math.max(...h.sets.filter(s => s.done).map(s => Number(s.weight) || 0), 0)),
+      y: toDisplayW(Math.max(...h.sets.filter(s => s.done).map(s => Number(s.weight) || 0), 0), chartEx),
     }));
-    drawLineChart(canvas, points, ' ' + unitLabel());
+    drawLineChart(canvas, points, ' ' + unitLabel(chartEx));
   }
 
   // weekly volume bars (last 8 weeks)
@@ -936,7 +951,7 @@ function saveSettings() {
 }
 
 function exportData() {
-  const blob = new Blob([JSON.stringify({ settings, program, logs, customs }, null, 2)], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify({ settings, program, logs, customs, unitOverrides }, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = 'workout-backup-' + iso(new Date()) + '.json';
@@ -955,6 +970,7 @@ function importData(event) {
       if (data.program && data.program.weeks) { program = data.program; saveProgram(); }
       if (data.logs)     { logs = data.logs; saveLogs(); }
       if (data.customs)  { customs = data.customs; saveCustoms(); }
+      if (data.unitOverrides) { unitOverrides = data.unitOverrides; saveUnits(); }
       alert('Backup imported ✓');
       renderSchedule(); renderSettings();
     } catch {

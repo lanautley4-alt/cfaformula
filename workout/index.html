@@ -89,7 +89,7 @@
 
   <section class="card">
     <div class="setting-row">
-      <div><strong>Units</strong><div class="subtle">Show weights in pounds or kilograms</div></div>
+      <div><strong>Default units</strong><div class="subtle">Tap the lbs/kg label on any exercise to override just that one</div></div>
       <select id="setUnits" class="unit-select" onchange="saveSettings()">
         <option value="lbs">lbs</option>
         <option value="kg">kg</option>
@@ -261,8 +261,8 @@
 </div>
 
 <script src="js/data.js?v=2"></script>
-<script src="js/progression.js?v=2"></script>
-<script src="js/app.js?v=5"></script>
+<script src="js/progression.js?v=3"></script>
+<script src="js/app.js?v=6"></script>
 <script>
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 </script>
