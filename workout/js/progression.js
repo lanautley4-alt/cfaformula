@@ -51,7 +51,7 @@ function suggestNext(exercise, history, programItem) {
 
   if (hitAll) {
     const next = Math.max(0, roundToHalf(lastWeight + inc));
-    const delta = typeof fmtWt === 'function' ? fmtWt(Math.abs(inc)) : Math.abs(inc) + ' lbs';
+    const delta = typeof fmtWt === 'function' ? fmtWt(Math.abs(inc), exercise) : Math.abs(inc) + ' lbs';
     return { weight: next, reps: targetReps, note: `+${delta} — you earned it` };
   }
 
