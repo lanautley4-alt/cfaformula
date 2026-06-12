@@ -65,6 +65,22 @@ function dayLog(dateStr, create) {
 }
 function setKey(blockId, itemIdx) { return blockId + '|' + itemIdx; }
 
+// A day is done when she taps "Finish workout" (log.completed) or
+// every working set is checked off.
+function isDayDone(dateStr) {
+  if (dayLog(dateStr).completed) return true;
+  const c = dayCompletion(dateStr);
+  return c.total > 0 && c.done >= c.total;
+}
+
+// ── Units (lbs / kg) — weights are stored in lbs internally ──
+const LB_PER_KG = 2.20462;
+function isKg() { return settings.units === 'kg'; }
+function unitLabel() { return isKg() ? 'kg' : 'lbs'; }
+function toDisplayW(lbs) { return Math.round((isKg() ? lbs / LB_PER_KG : lbs) * 2) / 2; }
+function fromDisplayW(v) { return isKg() ? v * LB_PER_KG : v; }
+function fmtWt(lbs) { return toDisplayW(lbs) + ' ' + unitLabel(); }
+
 // Resolve the exercise for an item on a date (today-only swaps live in the log)
 function resolveEx(dateStr, block, itemIdx) {
   const log = dayLog(dateStr);
@@ -213,7 +229,7 @@ function renderSchedule() {
     const pd = dayFor(d);
     const isTrain = pd && !pd.rest && pd.blocks.length;
     const c = dayCompletion(ds);
-    const dotClass = !isTrain ? 'none' : (c.total && c.done >= c.total ? 'done' : '');
+    const dotClass = !isTrain ? 'none' : (isDayDone(ds) ? 'done' : '');
     strip += `<div class="date-cell ${ds === dateStr ? 'selected' : ''} ${ds === today ? 'today' : ''}" onclick="selectDate('${ds}')">
       <span class="dow">${DOWS[d.getDay()]}</span><span class="dnum">${d.getDate()}</span><span class="dot ${dotClass}"></span></div>`;
   }
@@ -221,7 +237,7 @@ function renderSchedule() {
 
   // day header
   const c = dayCompletion(dateStr);
-  const isDone = c.total > 0 && c.done >= c.total;
+  const isDone = isDayDone(dateStr);
   let head = `<h2>${day.name}</h2><span class="focus">${day.focus}</span>`;
   head += `<span class="pill">${weekLabel(selectedDate)}</span>`;
   if (day.minutes) head += `<span class="pill time">~${day.minutes}m</span>`;
@@ -230,6 +246,12 @@ function renderSchedule() {
   document.getElementById('dayHeader').innerHTML = head;
   document.getElementById('dayProgressFill').style.width = c.total ? (100 * c.done / c.total) + '%' : '0';
   document.getElementById('addBlockBtn').classList.toggle('hidden', !!day.rest);
+
+  const fin = document.getElementById('finishBtn');
+  fin.classList.toggle('hidden', !!day.rest);
+  fin.textContent = isDone ? '✓ Workout complete — tap to undo' : '✓ Finish workout';
+  fin.className = 'wide ' + (isDone ? 'btn-outline' : 'btn-accent');
+  if (day.rest) fin.classList.add('hidden');
 
   // blocks
   document.getElementById('blocks').innerHTML = day.rest
@@ -286,7 +308,7 @@ function renderExercise(dateStr, block, itemIdx, log) {
   const isBW = ex.load === 'bw';
   const isTime = ex.load === 'time';
   const repUnit = ex.repUnit || (isTime ? 'sec' : 'rep');
-  const wDisplay = isBW || isTime ? 'BW' : (sug.weight || 0) + 'lbs';
+  const wDisplay = isBW || isTime ? 'BW' : toDisplayW(sug.weight || 0) + unitLabel();
   const rx = `${item.sets}×${item.reps} @ ${wDisplay}` + (item.rpe ? ` <span class="rpe">RPE ${item.rpe}</span>` : '');
 
   let rows = '';
@@ -298,8 +320,8 @@ function renderExercise(dateStr, block, itemIdx, log) {
     const rVal = pf.reps;
     const weightField = (isBW || isTime)
       ? `<div class="set-field"><input value="BW" disabled /><span class="unit">&nbsp;</span></div>`
-      : `<div class="set-field"><input type="number" inputmode="decimal" value="${wVal}" step="2.5" min="0"
-            onchange="logField('${dateStr}','${key}',${s},'weight',this.value)" /><span class="unit">lbs</span></div>`;
+      : `<div class="set-field"><input type="number" inputmode="decimal" value="${toDisplayW(wVal)}" step="${isKg() ? 1.25 : 2.5}" min="0"
+            onchange="logField('${dateStr}','${key}',${s},'weight',this.value)" /><span class="unit">${unitLabel()}</span></div>`;
     rows += `<div class="set-row">
       <button class="set-check ${done ? 'done' : ''}" onclick="toggleSet('${dateStr}','${block.id}',${itemIdx},${s})"></button>
       <span class="set-label">Set ${s + 1} — ${item.reps} ${repUnit === 'rep' ? 'reps' : repUnit}${item.rpe ? ` <span class="rpe">RPE ${item.rpe}</span>` : ''}</span>
@@ -381,7 +403,9 @@ function toggleSet(dateStr, blockId, itemIdx, setIdx) {
 function logField(dateStr, key, setIdx, field, value) {
   const log = dayLog(dateStr, true);
   const sets = ensureSets(log, key, setIdx + 1);
-  sets[setIdx][field] = Number(value) || 0;
+  let v = Number(value) || 0;
+  if (field === 'weight') v = fromDisplayW(v); // inputs are in display units
+  sets[setIdx][field] = v;
   const block = blockMap()[key.split('|')[0]];
   if (block) {
     const itemIdx = Number(key.split('|')[1]);
@@ -409,6 +433,54 @@ function toggleSkip(dateStr, blockId) {
   if (at >= 0) log.skipped.splice(at, 1); else log.skipped.push(blockId);
   saveLogs();
   renderSchedule();
+}
+
+// ── Finish workout ────────────────────────────────────────────
+function finishWorkout() {
+  const dateStr = iso(selectedDate);
+  const log = dayLog(dateStr, true);
+
+  if (isDayDone(dateStr)) {
+    log.completed = false; // undo
+    saveLogs();
+    renderSchedule();
+    return;
+  }
+
+  const c = dayCompletion(dateStr);
+  const remaining = c.total - c.done;
+  if (remaining > 0) {
+    const doAll = confirm(
+      `You have ${remaining} unchecked set${remaining === 1 ? '' : 's'}.\n\n` +
+      'OK — I did them: check them all off at the weights shown (counts toward your progress).\n' +
+      'Cancel — skip them: mark the workout done without them (they won’t inflate your weight suggestions).');
+    if (doAll) completeRemaining(dateStr, log);
+  }
+  log.completed = true;
+  saveLogs();
+  stopRest();
+  renderSchedule();
+}
+
+function completeRemaining(dateStr, log) {
+  const day = dayFor(new Date(dateStr + 'T12:00'));
+  for (const block of day.blocks) {
+    if (block.type === 'warmup' || (log.skipped || []).includes(block.id)) continue;
+    block.items.forEach((item, i) => {
+      const key = setKey(block.id, i);
+      const sets = ensureSets(log, key, item.sets);
+      const sug = suggestionFor(dateStr, block, i);
+      for (let s = 0; s < item.sets; s++) {
+        if (sets[s].done) continue;
+        const pf = prefillFor(sets, s, sug);
+        if (sets[s].weight === undefined) sets[s].weight = pf.weight;
+        if (sets[s].reps === undefined) sets[s].reps = pf.reps;
+        sets[s].done = true;
+      }
+      const ex = resolveEx(dateStr, block, i);
+      if (ex) stampLog(log, key, ex.id, item.reps);
+    });
+  }
 }
 
 // ── Rest timer ────────────────────────────────────────────────
@@ -574,7 +646,7 @@ function confirmAddExercise() {
     sets: Number(document.getElementById('addSets').value) || 3,
     reps: Number(document.getElementById('addReps').value) || 10,
     rpe: '',
-    weight: Number(document.getElementById('addWeight').value) || 0,
+    weight: fromDisplayW(Number(document.getElementById('addWeight').value) || 0),
   });
   saveProgram();
   closeSheets();
@@ -661,7 +733,7 @@ function renderWeek() {
     const isTrain = day && !day.rest && day.blocks.length;
     const c = dayCompletion(ds);
     const status = !isTrain ? '' :
-      c.done >= c.total && c.total > 0 ? '<span class="pill done">DONE</span>' :
+      isDayDone(ds) ? '<span class="pill done">DONE</span>' :
       c.done > 0 ? `<span class="pill">${c.done}/${c.total} sets</span>` : '';
     html += `<div class="week-card ${isTrain ? 'train' : ''} ${ds === today ? 'today' : ''}" onclick="selectDate('${ds}');showTab('schedule')">
       <div class="wc-date"><span class="dow">${DOWS[d.getDay()]}</span><span class="dnum">${d.getDate()}</span></div>
@@ -690,7 +762,7 @@ function computeStreak() {
     const isTrain = day && !day.rest && day.blocks.length;
     if (isTrain) {
       const c = dayCompletion(ds);
-      const completed = c.total > 0 && c.done >= c.total;
+      const completed = isDayDone(ds);
       if (completed) streak++;
       else if (ds !== iso(new Date())) break; // today in progress doesn't break it
     }
@@ -722,13 +794,13 @@ function renderProgress() {
     if (day && !day.rest && day.blocks.length) {
       scheduled++;
       const c = dayCompletion(iso(d));
-      if (c.total > 0 && c.done >= c.total) doneThisWeek++;
+      if (isDayDone(iso(d))) doneThisWeek++;
     }
   }
   document.getElementById('statRow').innerHTML = `
     <div class="stat"><strong>${computeStreak()}</strong><span>WORKOUT STREAK</span></div>
     <div class="stat"><strong>${doneThisWeek}/${scheduled}</strong><span>THIS WEEK</span></div>
-    <div class="stat"><strong>${Math.round(weekVolume(thisMonday) / 1000)}k</strong><span>LBS THIS WEEK</span></div>`;
+    <div class="stat"><strong>${Math.round(toDisplayW(weekVolume(thisMonday)) / 1000)}k</strong><span>${unitLabel().toUpperCase()} THIS WEEK</span></div>`;
 
   // exercise selector — weighted exercises with history
   const sel = document.getElementById('chartExercise');
@@ -747,12 +819,13 @@ function renderProgress() {
     const hist = exerciseHistory(sel.value);
     const points = hist.map(h => ({
       x: h.date,
-      y: Math.max(...h.sets.filter(s => s.done).map(s => Number(s.weight) || 0), 0),
+      y: toDisplayW(Math.max(...h.sets.filter(s => s.done).map(s => Number(s.weight) || 0), 0)),
     }));
-    drawLineChart(canvas, points, ' lbs');
+    drawLineChart(canvas, points, ' ' + unitLabel());
   }
 
   // weekly volume bars (last 8 weeks)
+  document.getElementById('volUnitLabel').textContent = `(${unitLabel()} lifted)`;
   const bars = [];
   for (let w = 7; w >= 0; w--) {
     const m = addDays(thisMonday, -7 * w);
@@ -852,11 +925,13 @@ function roundRect(ctx, x, y, w, h, r) {
 function renderSettings() {
   document.getElementById('setRestTimer').checked = !!settings.restTimer;
   document.getElementById('setAutoProgress').checked = !!settings.autoProgress;
+  document.getElementById('setUnits').value = settings.units || 'lbs';
 }
 
 function saveSettings() {
   settings.restTimer = document.getElementById('setRestTimer').checked;
   settings.autoProgress = document.getElementById('setAutoProgress').checked;
+  settings.units = document.getElementById('setUnits').value;
   lsSet(K_SETTINGS, settings);
 }
 

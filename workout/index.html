@@ -14,7 +14,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-180.png" />
   <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="style.css?v=4" />
+  <link rel="stylesheet" href="style.css?v=5" />
 </head>
 <body>
 
@@ -36,6 +36,7 @@
 
   <div id="blocks"></div>
 
+  <button id="finishBtn" class="btn-accent wide hidden" style="margin-bottom:10px" onclick="finishWorkout()">✓ Finish workout</button>
   <button id="addBlockBtn" class="btn-outline wide" onclick="openAddBlock()">＋ Add block</button>
   <div class="bottom-spacer"></div>
 </main>
@@ -70,7 +71,7 @@
   </section>
 
   <section class="card">
-    <div class="card-head"><h2>Weekly volume <span class="subtle">(lbs lifted)</span></h2></div>
+    <div class="card-head"><h2>Weekly volume <span class="subtle" id="volUnitLabel">(lbs lifted)</span></h2></div>
     <canvas id="volChart" width="640" height="220"></canvas>
   </section>
 
@@ -87,6 +88,13 @@
   <div class="topbar"><div class="topbar-title"><h1>Settings</h1></div></div>
 
   <section class="card">
+    <div class="setting-row">
+      <div><strong>Units</strong><div class="subtle">Show weights in pounds or kilograms</div></div>
+      <select id="setUnits" class="unit-select" onchange="saveSettings()">
+        <option value="lbs">lbs</option>
+        <option value="kg">kg</option>
+      </select>
+    </div>
     <div class="setting-row">
       <div><strong>Rest timer</strong><div class="subtle">Countdown after you check a set</div></div>
       <label class="switch"><input type="checkbox" id="setRestTimer" onchange="saveSettings()" /><span></span></label>
@@ -253,8 +261,8 @@
 </div>
 
 <script src="js/data.js?v=2"></script>
-<script src="js/progression.js?v=1"></script>
-<script src="js/app.js?v=4"></script>
+<script src="js/progression.js?v=2"></script>
+<script src="js/app.js?v=5"></script>
 <script>
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 </script>
