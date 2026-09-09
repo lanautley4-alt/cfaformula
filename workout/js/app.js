@@ -36,9 +36,32 @@ if (!library || !Array.isArray(library.workouts) || !library.workouts.length) {
   lsSet(K_LIBRARY, library);
 }
 if (!plan || !plan.rotation) {
-  plan = { assign: {}, rotation: library.weeks.map(w => w.id) };
+  plan = { assign: {}, rotation: library.weeks.map(w => w.id), seeded: [] };
   lsSet(K_PLAN, plan);
 }
+
+// ── Seed packs ──────────────────────────────────────────────────────────
+// Workouts that ship with an app update. Each pack lands once;
+// plan.seeded remembers which have arrived, so anything deleted
+// stays deleted and edits are never overwritten. New week
+// templates are added but left out of the rotation — they only
+// run when explicitly assigned.
+function applySeedPacks() {
+  if (typeof SEED_PACKS === 'undefined') return;
+  if (!Array.isArray(plan.seeded)) plan.seeded = [];
+  let changed = false;
+  for (const pack of SEED_PACKS) {
+    if (plan.seeded.includes(pack.id)) continue;
+    for (const w of pack.workouts)
+      if (!library.workouts.some(x => x.id === w.id)) library.workouts.push(structuredClone(w));
+    for (const wk of pack.weeks)
+      if (!library.weeks.some(x => x.id === wk.id)) library.weeks.push(structuredClone(wk));
+    plan.seeded.push(pack.id);
+    changed = true;
+  }
+  if (changed) { saveLibrary(); savePlan(); }
+}
+applySeedPacks();
 
 const REST_DAY = { id: '__rest', name: 'Rest Day', focus: 'Recovery — sleep, protein, hydrate', minutes: 0, blocks: [], rest: true };
 const REST_WEEK = { id: '__rest', name: 'Rest Week', focus: 'A full week off', days: { 0: null, 1: null, 2: null, 3: null, 4: null, 5: null, 6: null } };
@@ -1177,9 +1200,10 @@ function importData(event) {
 function resetProgram() {
   if (!confirm('Reset your library to the default Week A / Week B plan? Every saved workout and week template you made will be lost. Your logged history stays.')) return;
   library = defaultLibrary();
-  plan = { assign: {}, rotation: library.weeks.map(w => w.id) };
+  plan = { assign: {}, rotation: library.weeks.map(w => w.id), seeded: [] };
   days = {};
   saveLibrary(); savePlan(); saveDays();
+  applySeedPacks();   // the shipped workouts come back too
   renderSchedule();
   alert('Library reset ✓');
 }
