@@ -694,6 +694,59 @@ const DEFAULT_PROGRAM = { weeks: [WEEK_A, WEEK_B] };
 // A Monday used as the fixed anchor for week A/B alternation
 const EPOCH_MONDAY = '2026-01-05';
 
+// ── v3 library ────────────────────────────────────────────────
+// A *workout* is one day's session, saved on its own so it can be
+// dropped into any day. A *week template* is seven slots pointing at
+// workouts (null = rest). Weeks with nothing assigned cycle through
+// plan.rotation, which reproduces the old A/B alternation by default.
+
+function slugify(s) {
+  return String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
+}
+
+// Turns an old-format program ({weeks:[{0..6:day}]}) into {workouts, weeks}
+function libraryFromProgram(prog, names) {
+  const workouts = [], weeks = [];
+  const seen = {};
+  (prog.weeks || []).forEach((src, wi) => {
+    const wid = 'wk-' + String.fromCharCode(97 + wi);
+    const wname = (names && names[wi]) || 'Week ' + String.fromCharCode(65 + wi);
+    const days = {};
+    const focusBits = [];
+    let mins = 0, trainDays = 0;
+    for (const dow of [1, 2, 3, 4, 5, 6, 0]) {
+      const d = src[dow];
+      if (!d || d.rest || !(d.blocks || []).length) { days[dow] = null; continue; }
+      let id = 'w-' + (slugify(d.name) || 'workout');
+      let n = 2;
+      while (seen[id]) id = 'w-' + slugify(d.name) + '-' + n++;
+      seen[id] = true;
+      workouts.push({
+        id,
+        name: d.name,
+        focus: d.focus || '',
+        minutes: d.minutes || 45,
+        blocks: structuredClone(d.blocks),
+      });
+      days[dow] = id;
+      mins += d.minutes || 0;
+      trainDays++;
+      focusBits.push(d.name);
+    }
+    weeks.push({
+      id: wid,
+      name: wname,
+      focus: trainDays ? `${trainDays} days · ~${Math.round(mins / trainDays)}m each` : 'Rest week',
+      days,
+    });
+  });
+  return { workouts, weeks };
+}
+
+function defaultLibrary() {
+  return libraryFromProgram(structuredClone(DEFAULT_PROGRAM), ['Week A · Barbell base', 'Week B · Power & Olympic']);
+}
+
 // ── Legacy block map ──────────────────────────────────────────
 // Maps blocks from the original single-week program (v1) that no longer
 // exist, so old logged sets keep their exercise identity after migration.

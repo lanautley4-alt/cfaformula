@@ -4,7 +4,10 @@
 
 // ── Storage ───────────────────────────────────────────────────
 const K_SETTINGS = 'wt_settings';
-const K_PROGRAM  = 'wt_program_v2';
+const K_PROGRAM  = 'wt_program_v2';   // legacy — read once, then migrated
+const K_LIBRARY  = 'wt_library_v3';   // { workouts: [...], weeks: [...] }
+const K_PLAN     = 'wt_plan_v3';      // { assign: {mondayISO: weekId}, rotation: [weekId] }
+const K_DAYS     = 'wt_days_v3';      // { dateISO: workout }  — this-day-only versions
 const K_LOGS     = 'wt_logs';
 const K_CUSTOM   = 'wt_custom_exercises';
 const K_UNITS    = 'wt_units'; // per-exercise unit overrides
@@ -16,26 +19,74 @@ function lsGet(key, fallback) {
 function lsSet(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
 
 let settings = lsGet(K_SETTINGS, { restTimer: true, autoProgress: true });
-let program  = lsGet(K_PROGRAM, null) || structuredClone(DEFAULT_PROGRAM);
-if (!program.weeks) program = structuredClone(DEFAULT_PROGRAM); // pre-A/B format
 let logs     = lsGet(K_LOGS, {});
 let customs  = lsGet(K_CUSTOM, []);
 let unitOverrides = lsGet(K_UNITS, {});
 
-// ── Week A/B rotation ─────────────────────────────────────────
-function weekIndexFor(date) {
-  const anchor = mondayOf(new Date(EPOCH_MONDAY + 'T12:00'));
-  const wk = Math.round((mondayOf(date) - anchor) / (7 * 864e5));
-  const n = program.weeks.length;
-  return ((wk % n) + n) % n;
-}
-function dayFor(date) { return program.weeks[weekIndexFor(date)][date.getDay()]; }
-function weekLabel(date) { return 'WEEK ' + String.fromCharCode(65 + weekIndexFor(date)); }
+// ── Library & plan (with one-time migration from the v2 program) ──
+let library = lsGet(K_LIBRARY, null);
+let plan    = lsGet(K_PLAN, null);
+let days    = lsGet(K_DAYS, {});
 
-function saveProgram() { lsSet(K_PROGRAM, program); }
+if (!library || !Array.isArray(library.workouts) || !library.workouts.length) {
+  const old = lsGet(K_PROGRAM, null);
+  library = (old && old.weeks)
+    ? libraryFromProgram(old, ['Week A · Barbell base', 'Week B · Power & Olympic'])
+    : defaultLibrary();
+  lsSet(K_LIBRARY, library);
+}
+if (!plan || !plan.rotation) {
+  plan = { assign: {}, rotation: library.weeks.map(w => w.id) };
+  lsSet(K_PLAN, plan);
+}
+
+const REST_DAY = { id: '__rest', name: 'Rest Day', focus: 'Recovery — sleep, protein, hydrate', minutes: 0, blocks: [], rest: true };
+const REST_WEEK = { id: '__rest', name: 'Rest Week', focus: 'A full week off', days: { 0: null, 1: null, 2: null, 3: null, 4: null, 5: null, 6: null } };
+
+function saveLibrary() { lsSet(K_LIBRARY, library); }
+function savePlan()    { lsSet(K_PLAN, plan); }
+function saveDays()    { lsSet(K_DAYS, days); }
 function saveLogs()    { lsSet(K_LOGS, logs); }
 function saveCustoms() { lsSet(K_CUSTOM, customs); }
 function saveUnits()   { lsSet(K_UNITS, unitOverrides); }
+
+function workoutById(id) { return library.workouts.find(w => w.id === id) || null; }
+function weekById(id)    { return id === '__rest' ? REST_WEEK : (library.weeks.find(w => w.id === id) || null); }
+function newId(p)        { return p + '-' + Date.now().toString(36) + Math.floor(Math.random() * 900 + 100); }
+
+// ── Which week template covers a given date ───────────────────
+function weekIdFor(date) {
+  const mk = iso(mondayOf(date));
+  if (plan.assign[mk] && weekById(plan.assign[mk])) return plan.assign[mk];
+  const rot = (plan.rotation || []).filter(id => weekById(id));
+  if (!rot.length) return null;
+  const anchor = mondayOf(new Date(EPOCH_MONDAY + 'T12:00'));
+  const n = Math.round((mondayOf(date) - anchor) / (7 * 864e5));
+  return rot[((n % rot.length) + rot.length) % rot.length];
+}
+function weekFor(date) { return weekById(weekIdFor(date)); }
+function weekLabel(date) {
+  const w = weekFor(date);
+  return w ? w.name.toUpperCase() : 'NO WEEK SET';
+}
+function isAssigned(date) { return !!plan.assign[iso(mondayOf(date))]; }
+
+// The workout shown on a date: a this-day-only version wins, otherwise
+// the week template's slot for that weekday.
+function dayFor(date) {
+  const ds = iso(date);
+  if (days[ds]) return days[ds];
+  const wk = weekFor(date);
+  const w = wk ? workoutById(wk.days[date.getDay()]) : null;
+  return w || REST_DAY;
+}
+// Where a date's workout comes from: 'day' (detached), 'library', or 'none'
+function daySource(dateStr) {
+  if (days[dateStr]) return 'day';
+  const d = new Date(dateStr + 'T12:00');
+  const wk = weekFor(d);
+  return wk && workoutById(wk.days[d.getDay()]) ? 'library' : 'none';
+}
 
 // ── Exercise lookup ───────────────────────────────────────────
 function allExercises() { return BUILTIN_EXERCISES.concat(customs); }
@@ -44,6 +95,12 @@ function exById(id) { return allExercises().find(e => e.id === id); }
 // ── Dates ─────────────────────────────────────────────────────
 let selectedDate = new Date();
 let weekOffset = 0; // for week view
+
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
 
 function iso(d) {
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
@@ -109,11 +166,16 @@ function resolveEx(dateStr, block, itemIdx) {
 // for sets logged before stamping existed.
 function blockMap() {
   const map = {};
-  for (const week of program.weeks)
-    for (const day of Object.values(week))
-      for (const block of (day.blocks || []))
-        if (block.items) map[block.id] = block;
+  const add = w => { for (const block of (w.blocks || [])) if (block.items) map[block.id] = block; };
+  for (const w of library.workouts) add(w);
+  for (const w of Object.values(days)) add(w);
   return map;
+}
+
+// The block object as it exists on a specific date (day version wins)
+function blockOn(dateStr, blockId) {
+  const day = dayFor(new Date(dateStr + 'T12:00'));
+  return (day.blocks || []).find(b => b.id === blockId) || blockMap()[blockId] || null;
 }
 
 function exerciseHistory(exId) {
@@ -189,12 +251,13 @@ function suggestionFor(dateStr, block, itemIdx) {
 
 // ── Tabs ──────────────────────────────────────────────────────
 function showTab(tab) {
-  for (const t of ['week', 'schedule', 'progress', 'settings']) {
+  for (const t of ['week', 'schedule', 'library', 'progress', 'settings']) {
     document.getElementById('view-' + t).classList.toggle('hidden', t !== tab);
     document.getElementById('tab-' + t).classList.toggle('active', t === tab);
   }
   if (tab === 'schedule') renderSchedule();
   if (tab === 'week') renderWeek();
+  if (tab === 'library') renderLibrary();
   if (tab === 'progress') renderProgress();
   if (tab === 'settings') renderSettings();
 }
@@ -253,14 +316,22 @@ function renderSchedule() {
   // day header
   const c = dayCompletion(dateStr);
   const isDone = isDayDone(dateStr);
-  let head = `<h2>${day.name}</h2><span class="focus">${day.focus}</span>`;
-  head += `<span class="pill">${weekLabel(selectedDate)}</span>`;
+  const src = daySource(dateStr);
+  let head = `<h2>${esc(day.name)}</h2><span class="focus">${esc(day.focus || '')}</span>`;
+  head += `<span class="pill">${esc(weekLabel(selectedDate))}</span>`;
   if (day.minutes) head += `<span class="pill time">~${day.minutes}m</span>`;
+  if (src === 'day') head += `<span class="pill edited">THIS DAY ONLY</span>`;
   if (isDone) head += `<span class="pill done">DONE</span>`;
-  head += `<button class="link-btn" onclick="openMove()">move</button>`;
+  head += `<div class="day-actions">
+    <button class="link-btn" onclick="openPickWorkout('${dateStr}')">change workout</button>
+    ${day.rest ? '' : `<button class="link-btn" onclick="editDayWorkout('${dateStr}')">edit</button>`}
+    ${day.rest ? '' : `<button class="link-btn" onclick="openMove()">move</button>`}
+    ${src === 'day' ? `<button class="link-btn" onclick="openSaveDay('${dateStr}')">save to library</button>
+                       <button class="link-btn" onclick="revertDay('${dateStr}')">revert</button>` : ''}
+  </div>`;
   document.getElementById('dayHeader').innerHTML = head;
   document.getElementById('dayProgressFill').style.width = c.total ? (100 * c.done / c.total) + '%' : '0';
-  document.getElementById('addBlockBtn').classList.toggle('hidden', !!day.rest);
+  document.getElementById('addBlockBtn').classList.remove('hidden');
 
   const fin = document.getElementById('finishBtn');
   fin.classList.toggle('hidden', !!day.rest);
@@ -270,7 +341,7 @@ function renderSchedule() {
 
   // blocks
   document.getElementById('blocks').innerHTML = day.rest
-    ? `<div class="card"><p class="subtle" style="padding:6px 2px">😌 Rest day. ${day.focus}</p></div>`
+    ? `<div class="card"><p class="subtle" style="padding:6px 2px">😌 Rest day. ${esc(day.focus || '')}<br><br>Tap <strong>change workout</strong> above to pull one in from your library, or <strong>add block</strong> to build one here.</p></div>`
     : day.blocks.map(b => renderBlock(dateStr, b, log)).join('');
 }
 
@@ -282,13 +353,13 @@ function renderBlock(dateStr, block, log) {
     const steps = block.steps.map((s, i) => `
       <div class="wu-step ${done.includes(i) ? 'done' : ''}" onclick="toggleWarmup('${dateStr}','${block.id}',${i})">
         <span class="n">${done.includes(i) ? '✓' : i + 1}</span>
-        <span class="t">${s.text}</span>
-        <span class="amt">${s.amount}</span>
+        <span class="t">${esc(s.text)}</span>
+        <span class="amt">${esc(s.amount)}</span>
       </div>`).join('');
     return `<div class="block">
       <div class="block-head">
         <span class="block-chip warmup">WARM-UP</span>
-        <h3>${block.name}</h3>
+        <h3>${esc(block.name)}</h3>
         <span class="block-meta">${block.steps.length} steps</span>
       </div>
       <div style="margin-top:8px">${steps}</div>
@@ -302,10 +373,10 @@ function renderBlock(dateStr, block, log) {
   return `<div class="block ${skipped ? 'skipped' : ''}">
     <div class="block-head">
       <span class="block-chip ${block.type}">${chip}</span>
-      <h3>${block.name}</h3>
+      <h3>${esc(block.name)}</h3>
       <button class="link-btn" onclick="toggleSkip('${dateStr}','${block.id}')">${skipped ? 'unskip' : 'skip'}</button>
     </div>
-    <div class="block-note">${block.note || meta}</div>
+    <div class="block-note">${esc(block.note || meta)}</div>
     ${items}
     ${skipped ? '' : `<button class="add-ex-btn" onclick="openAddExercise('${block.id}')">＋ Add exercise</button>`}
   </div>`;
@@ -348,7 +419,7 @@ function renderExercise(dateStr, block, itemIdx, log) {
 
   return `<div class="exercise">
     <div class="ex-head">
-      <h4>${ex.name}</h4>
+      <h4>${esc(ex.name)}</h4>
       <span class="ex-count">${doneCount}/${item.sets}</span>
       <span class="spacer"></span>
       ${ex.load === 'weight' ? `<button class="link-btn" onclick="toggleUnit('${ex.id}')">${unitLabel(ex)} ⇄</button>` : ''}
@@ -419,7 +490,7 @@ function toggleSet(dateStr, blockId, itemIdx, setIdx) {
 function logField(dateStr, key, setIdx, field, value) {
   const log = dayLog(dateStr, true);
   const sets = ensureSets(log, key, setIdx + 1);
-  const block = blockMap()[key.split('|')[0]];
+  const block = blockOn(dateStr, key.split('|')[0]);
   const itemIdx = Number(key.split('|')[1]);
   const ex = block ? resolveEx(dateStr, block, itemIdx) : null;
   let v = Number(value) || 0;
@@ -519,6 +590,88 @@ function stopRest() {
   document.getElementById('restBanner').classList.add('hidden');
 }
 
+// ── Edit scope: this day only vs. the saved workout ───────────
+// Every structural edit routes through here, so a change she makes
+// mid-workout never silently rewrites the saved version (or vice versa).
+let scopeResolve = null;
+
+function askScope(dateStr, title, todayLabel, libLabel, always) {
+  const src = daySource(dateStr);
+  const d = new Date(dateStr + 'T12:00');
+  const wk = weekFor(d);
+
+  if (!always) {
+    if (src === 'day')  return Promise.resolve('day');  // already a one-off
+    if (src === 'none') return Promise.resolve('new');  // nothing scheduled
+  }
+  // no editable week template behind this date — the change can only be local
+  if (!wk || wk.id === '__rest') return Promise.resolve(src === 'day' ? 'day' : 'new');
+
+  const day = dayFor(d);
+  const body = src === 'library'
+    ? `This day is running the saved workout <strong>${esc(day.name)}</strong>. Where should this go?`
+    : src === 'day'
+      ? `This day already has its own version. Keep it here, or push it to <strong>${esc(wk.name)}</strong>?`
+      : `Nothing is scheduled here. Just this day, or every ${DOW_FULL[d.getDay()]} in <strong>${esc(wk.name)}</strong>?`;
+
+  document.getElementById('scopeTitle').textContent = title;
+  document.getElementById('scopeBody').innerHTML = `<p class="subtle">${body}</p>`;
+  document.getElementById('scopeDayBtn').textContent = todayLabel || ('Just ' + fmtShort(d));
+  document.getElementById('scopeLibBtn').textContent = libLabel ||
+    (src === 'library' ? 'Update “' + day.name + '” everywhere' : 'Every ' + DOW_FULL[d.getDay()] + ' in ' + wk.name);
+  document.getElementById('scopeSheet').classList.remove('hidden');
+  return new Promise(res => { scopeResolve = res; });
+}
+
+function resolveScope(choice) {
+  document.getElementById('scopeSheet').classList.add('hidden');
+  const r = scopeResolve; scopeResolve = null;
+  if (r) r(choice || null);
+}
+
+function detachWorkout(w) {
+  const c = structuredClone(w);
+  c.sourceId = (w.id && w.id !== '__rest') ? (w.sourceId || w.id) : null;
+  c.id = newId('d');
+  delete c.rest;
+  return c;
+}
+
+// Runs fn on whichever workout object the edit should land in.
+async function editDay(dateStr, title, fn, todayLabel, libLabel) {
+  const choice = await askScope(dateStr, title, todayLabel, libLabel);
+  if (!choice) return false;
+  const d = new Date(dateStr + 'T12:00');
+
+  if (choice === 'library') {
+    const wk = weekFor(d);
+    const target = workoutById(wk.days[d.getDay()]);
+    if (!target) return false;
+    fn(target);
+    saveLibrary();
+  } else if (choice === 'day') {
+    if (!days[dateStr]) days[dateStr] = detachWorkout(dayFor(d));
+    fn(days[dateStr]);
+    saveDays();
+  } else { // 'new' — nothing scheduled, build a workout just for this date
+    days[dateStr] = { id: newId('d'), sourceId: null, name: 'Custom Workout', focus: '', minutes: 30, blocks: [] };
+    fn(days[dateStr]);
+    saveDays();
+  }
+  renderSchedule();
+  renderWeek();
+  return true;
+}
+
+function revertDay(dateStr) {
+  if (!days[dateStr]) return;
+  if (!confirm('Drop this day’s custom version and go back to what your week template says?')) return;
+  delete days[dateStr];
+  saveDays();
+  renderSchedule();
+  renderWeek();
+}
+
 // ── Swap ──────────────────────────────────────────────────────
 let swapCtx = null;
 function openSwap(dateStr, blockId, itemIdx) {
@@ -526,6 +679,13 @@ function openSwap(dateStr, blockId, itemIdx) {
   const block = day.blocks.find(b => b.id === blockId);
   const current = resolveEx(dateStr, block, itemIdx);
   swapCtx = { dateStr, blockId, itemIdx, current };
+
+  const src = daySource(dateStr);
+  document.getElementById('swapScopeRow').classList.toggle('hidden', src !== 'library');
+  const always = document.querySelector('input[name="swapScope"][value="always"]');
+  if (always) always.parentElement.lastChild.textContent = ' Save to “' + day.name + '”';
+  const today = document.querySelector('input[name="swapScope"][value="today"]');
+  if (today) today.checked = true;
 
   document.getElementById('swapTitle').textContent = 'Swap ' + current.name;
   document.getElementById('swapSearch').value = '';
@@ -600,15 +760,17 @@ function renderSwapList() {
 
 function confirmSwap(newExId) {
   const { dateStr, blockId, itemIdx } = swapCtx;
-  const scope = document.querySelector('input[name="swapScope"]:checked').value;
-  const day = dayFor(new Date(dateStr + 'T12:00'));
-  const block = day.blocks.find(b => b.id === blockId);
+  const picked = document.querySelector('input[name="swapScope"]:checked');
+  const scope = daySource(dateStr) === 'library' && picked ? picked.value : 'today';
 
   if (scope === 'always') {
-    block.items[itemIdx].ex = newExId;
+    const d = new Date(dateStr + 'T12:00');
+    const wk = weekFor(d);
+    const target = workoutById(wk.days[d.getDay()]);
+    const block = target && target.blocks.find(b => b.id === blockId);
+    if (block) { block.items[itemIdx].ex = newExId; saveLibrary(); }
     const log = dayLog(dateStr, true);
     if (log.swaps) delete log.swaps[setKey(blockId, itemIdx)];
-    saveProgram();
   } else {
     const log = dayLog(dateStr, true);
     if (!log.swaps) log.swaps = {};
@@ -633,10 +795,6 @@ function openAddExercise(blockId) {
 }
 
 function confirmAddExercise() {
-  const day = dayFor(selectedDate);
-  const block = day.blocks.find(b => b.id === addCtx.blockId);
-  if (!block) return;
-
   let exId; // weight input below is converted with this exercise's unit
   const customName = document.getElementById('newExName').value.trim();
   if (customName) {
@@ -655,16 +813,20 @@ function confirmAddExercise() {
     exId = document.getElementById('addPick').value;
   }
 
-  block.items.push({
+  const item = {
     ex: exId,
     sets: Number(document.getElementById('addSets').value) || 3,
     reps: Number(document.getElementById('addReps').value) || 10,
     rpe: '',
     weight: fromDisplayW(Number(document.getElementById('addWeight').value) || 0, exById(exId)),
-  });
-  saveProgram();
+  };
+  const dateStr = iso(selectedDate);
+  const blockId = addCtx.blockId;
   closeSheets();
-  renderSchedule();
+  editDay(dateStr, 'Add ' + (exById(exId) || {}).name, w => {
+    const block = w.blocks.find(b => b.id === blockId);
+    if (block) block.items.push(structuredClone(item));
+  });
 }
 
 // ── Add block ─────────────────────────────────────────────────
@@ -674,25 +836,33 @@ function openAddBlock() {
 }
 
 function confirmAddBlock() {
-  const day = dayFor(selectedDate);
   const name = document.getElementById('newBlockName').value.trim() || 'New Block';
-  day.blocks.push({
+  const block = {
     id: 'blk-' + Date.now(),
     type: document.getElementById('newBlockType').value,
     name,
     rounds: Number(document.getElementById('newBlockRounds').value) || 3,
     rest: Number(document.getElementById('newBlockRest').value) || 60,
     items: [],
-  });
-  if (day.rest) { day.rest = false; day.name = name; day.minutes = 30; }
-  saveProgram();
+  };
+  const dateStr = iso(selectedDate);
   closeSheets();
-  renderSchedule();
+  editDay(dateStr, 'Add block “' + name + '”', w => {
+    const wasEmpty = !(w.blocks || []).length;
+    w.blocks.push(structuredClone(block));
+    // first block on an empty/rest day: the day takes the block's name
+    if (wasEmpty && (w.rest || w.name === 'Rest Day' || w.name === 'Custom Workout')) {
+      delete w.rest;
+      w.name = name;
+      w.minutes = w.minutes || 30;
+    }
+  });
 }
 
 function closeSheets() {
-  for (const id of ['swapSheet', 'addSheet', 'blockSheet', 'moveSheet'])
-    document.getElementById(id).classList.add('hidden');
+  for (const id of ['swapSheet', 'addSheet', 'blockSheet', 'moveSheet',
+                    'pickSheet', 'saveDaySheet', 'weekPickSheet', 'weekEditSheet'])
+    document.getElementById(id)?.classList.add('hidden');
 }
 
 // ── Move workout to another day ───────────────────────────────
@@ -702,17 +872,19 @@ function openMove() { openMoveFor(iso(selectedDate)); }
 
 function openMoveFor(dateStr) {
   const d = new Date(dateStr + 'T12:00');
-  moveCtx = { wi: weekIndexFor(d), dow: d.getDay() };
-  const week = program.weeks[moveCtx.wi];
-  document.getElementById('moveTitle').textContent =
-    'Move ' + week[moveCtx.dow].name + ' (' + weekLabel(d).toLowerCase().replace('w', 'W') + ')';
+  const week = weekFor(d);
+  if (!week) { alert('No week template is set for this week yet.'); return; }
+  moveCtx = { weekId: week.id, dow: d.getDay() };
+  const nameOf = dw => { const w = workoutById(week.days[dw]); return w ? w.name : 'Rest'; };
+  document.getElementById('moveTitle').textContent = 'Move ' + nameOf(moveCtx.dow);
+  document.getElementById('moveNote').textContent =
+    'This reorders “' + week.name + '”, so it applies to every week using that template.';
   const order = [1, 2, 3, 4, 5, 6, 0]; // Mon … Sun
   document.getElementById('moveList').innerHTML = order.map(dw => {
-    const p = week[dw];
     const isCur = dw === moveCtx.dow;
     return `<div class="swap-item" ${isCur ? 'style="opacity:0.45"' : `onclick="confirmMove(${dw})"`}>
       <strong>${DOW_FULL[dw]}</strong>
-      <span class="tag">${p.name}</span>
+      <span class="tag">${esc(nameOf(dw))}</span>
       ${isCur ? '<span class="tag">current</span>' : ''}
     </div>`;
   }).join('');
@@ -720,11 +892,12 @@ function openMoveFor(dateStr) {
 }
 
 function confirmMove(targetDow) {
-  const { wi, dow } = moveCtx;
-  const week = program.weeks[wi];
+  const { weekId, dow } = moveCtx;
+  const week = weekById(weekId);
+  if (!week) return;
   // the two days trade places, so nothing is ever lost
-  [week[dow], week[targetDow]] = [week[targetDow], week[dow]];
-  saveProgram();
+  [week.days[dow], week.days[targetDow]] = [week.days[targetDow], week.days[dow]];
+  saveLibrary();
   closeSheets();
   renderSchedule();
   renderWeek();
@@ -736,8 +909,21 @@ function shiftWeek(n) { weekOffset += n; renderWeek(); }
 function renderWeek() {
   const monday = addDays(mondayOf(new Date()), weekOffset * 7);
   const today = iso(new Date());
+  const wk = weekFor(monday);
   document.getElementById('weekRange2').textContent =
-    fmtShort(monday) + ' – ' + fmtShort(addDays(monday, 6)) + ' · ' + weekLabel(monday);
+    fmtShort(monday) + ' – ' + fmtShort(addDays(monday, 6));
+
+  // week template selector
+  document.getElementById('weekProgram').innerHTML = `
+    <div class="wp-row">
+      <div class="wp-body">
+        <span class="wp-label">PROGRAM THIS WEEK</span>
+        <strong>${esc(wk ? wk.name : 'Nothing set')}</strong>
+        <span class="subtle">${esc(wk ? (wk.focus || '') : 'Pick a week template to fill these days')}${
+          wk && !isAssigned(monday) ? ' · on rotation' : ''}</span>
+      </div>
+      <button class="btn-outline" onclick="openWeekPicker('${iso(monday)}')">change</button>
+    </div>`;
 
   let html = '';
   for (let i = 0; i < 7; i++) {
@@ -749,11 +935,12 @@ function renderWeek() {
     const status = !isTrain ? '' :
       isDayDone(ds) ? '<span class="pill done">DONE</span>' :
       c.done > 0 ? `<span class="pill">${c.done}/${c.total} sets</span>` : '';
+    const tag = days[ds] ? '<span class="pill edited">DAY</span>' : '';
     html += `<div class="week-card ${isTrain ? 'train' : ''} ${ds === today ? 'today' : ''}" onclick="selectDate('${ds}');showTab('schedule')">
       <div class="wc-date"><span class="dow">${DOWS[d.getDay()]}</span><span class="dnum">${d.getDate()}</span></div>
-      <div class="wc-body"><strong>${day.name}</strong><span class="subtle">${day.focus}</span></div>
-      ${status}
-      <button class="link-btn" onclick="event.stopPropagation();openMoveFor('${ds}')">move</button>
+      <div class="wc-body"><strong>${esc(day.name)}</strong><span class="subtle">${esc(day.focus || '')}</span></div>
+      ${tag}${status}
+      <button class="link-btn" onclick="event.stopPropagation();openPickWorkout('${ds}')">change</button>
     </div>`;
   }
   document.getElementById('weekCards').innerHTML = html;
@@ -951,7 +1138,7 @@ function saveSettings() {
 }
 
 function exportData() {
-  const blob = new Blob([JSON.stringify({ settings, program, logs, customs, unitOverrides }, null, 2)], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify({ v: 3, settings, library, plan, days, logs, customs, unitOverrides }, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = 'workout-backup-' + iso(new Date()) + '.json';
@@ -967,7 +1154,13 @@ function importData(event) {
     try {
       const data = JSON.parse(reader.result);
       if (data.settings) { settings = data.settings; lsSet(K_SETTINGS, settings); }
-      if (data.program && data.program.weeks) { program = data.program; saveProgram(); }
+      if (data.library && data.library.workouts) { library = data.library; saveLibrary(); }
+      else if (data.program && data.program.weeks) { // v2 backup
+        library = libraryFromProgram(data.program, ['Week A', 'Week B']); saveLibrary();
+        plan = { assign: {}, rotation: library.weeks.map(w => w.id) }; savePlan();
+      }
+      if (data.plan && data.plan.rotation) { plan = data.plan; savePlan(); }
+      if (data.days)     { days = data.days; saveDays(); }
       if (data.logs)     { logs = data.logs; saveLogs(); }
       if (data.customs)  { customs = data.customs; saveCustoms(); }
       if (data.unitOverrides) { unitOverrides = data.unitOverrides; saveUnits(); }
@@ -982,11 +1175,13 @@ function importData(event) {
 }
 
 function resetProgram() {
-  if (!confirm('Reset your program to the default Week A / Week B plan? Your logged history stays.')) return;
-  program = structuredClone(DEFAULT_PROGRAM);
-  saveProgram();
+  if (!confirm('Reset your library to the default Week A / Week B plan? Every saved workout and week template you made will be lost. Your logged history stays.')) return;
+  library = defaultLibrary();
+  plan = { assign: {}, rotation: library.weeks.map(w => w.id) };
+  days = {};
+  saveLibrary(); savePlan(); saveDays();
   renderSchedule();
-  alert('Program reset ✓');
+  alert('Library reset ✓');
 }
 
 // ── Boot ──────────────────────────────────────────────────────

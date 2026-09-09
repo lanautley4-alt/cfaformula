@@ -14,7 +14,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-180.png" />
   <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="style.css?v=5" />
+  <link rel="stylesheet" href="style.css?v=6" />
 </head>
 <body>
 
@@ -51,7 +51,21 @@
     </div>
     <button class="icon-btn" onclick="shiftWeek(1)">&#8250;</button>
   </div>
+  <div id="weekProgram"></div>
   <div id="weekCards"></div>
+  <div class="bottom-spacer"></div>
+</main>
+
+<!-- ===== LIBRARY VIEW ===== -->
+<main id="view-library" class="view hidden">
+  <div class="topbar"><div class="topbar-title">
+    <h1>Library</h1>
+    <span class="subtle">Saved workouts and the week templates built from them</span>
+  </div></div>
+
+  <div id="libSeg" class="segmented"></div>
+  <input id="libSearch" type="text" class="lib-search" placeholder="Search…" oninput="renderLibrary()" />
+  <div id="libBody"></div>
   <div class="bottom-spacer"></div>
 </main>
 
@@ -133,7 +147,8 @@
 <!-- ===== TAB BAR ===== -->
 <nav class="tabbar">
   <button id="tab-week"     onclick="showTab('week')"><span class="tab-ico">&#9633;</span>WEEK</button>
-  <button id="tab-schedule" class="active" onclick="showTab('schedule')"><span class="tab-ico">&#9636;</span>SCHEDULE</button>
+  <button id="tab-schedule" class="active" onclick="showTab('schedule')"><span class="tab-ico">&#9636;</span>TODAY</button>
+  <button id="tab-library"  onclick="showTab('library')"><span class="tab-ico">&#9776;</span>LIBRARY</button>
   <button id="tab-progress" onclick="showTab('progress')"><span class="tab-ico">&#9650;</span>PROGRESS</button>
   <button id="tab-settings" onclick="showTab('settings')"><span class="tab-ico">&#9881;</span>SETTINGS</button>
 </nav>
@@ -150,9 +165,9 @@
   <div class="sheet">
     <div class="sheet-handle"></div>
     <h2 id="swapTitle">Swap exercise</h2>
-    <div class="swap-scope">
+    <div class="swap-scope" id="swapScopeRow">
       <label><input type="radio" name="swapScope" value="today" checked /> Just today</label>
-      <label><input type="radio" name="swapScope" value="always" /> From now on</label>
+      <label><input type="radio" name="swapScope" value="always" /> Save to the workout</label>
     </div>
     <input id="swapSearch" type="text" placeholder="Search all exercises…" oninput="renderSwapList()" />
 
@@ -237,7 +252,8 @@
   <div class="sheet">
     <div class="sheet-handle"></div>
     <h2 id="moveTitle">Move workout</h2>
-    <p class="subtle">Pick a day — the two workouts trade places:</p>
+    <p class="subtle">Pick a day — the two workouts trade places.</p>
+    <p class="subtle" id="moveNote"></p>
     <div id="moveList" class="swap-list"></div>
   </div>
 </div>
@@ -260,9 +276,134 @@
   </div>
 </div>
 
-<script src="js/data.js?v=2"></script>
+<!-- ===== EDIT SCOPE SHEET ===== -->
+<div id="scopeSheet" class="sheet-overlay hidden" onclick="if(event.target===this)resolveScope(null)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h2 id="scopeTitle">Where should this go?</h2>
+    <div id="scopeBody"></div>
+    <button id="scopeDayBtn" class="btn-accent wide" onclick="resolveScope('day')">Just this day</button>
+    <button id="scopeLibBtn" class="btn-outline wide" style="margin-top:10px" onclick="resolveScope('library')">Update the saved workout</button>
+    <button class="link-btn wide" style="margin-top:8px" onclick="resolveScope(null)">Cancel</button>
+  </div>
+</div>
+
+<!-- ===== PICK WORKOUT SHEET ===== -->
+<div id="pickSheet" class="sheet-overlay hidden" onclick="if(event.target===this)choosePick(undefined)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h2 id="pickTitle">Choose a workout</h2>
+    <input id="pickSearch" type="text" placeholder="Search your workouts…" oninput="renderPickList()" />
+    <div id="pickList" class="swap-list"></div>
+  </div>
+</div>
+
+<!-- ===== WEEK TEMPLATE PICKER ===== -->
+<div id="weekPickSheet" class="sheet-overlay hidden" onclick="if(event.target===this)closeSheets()">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h2 id="weekPickTitle">Program for this week</h2>
+    <p class="subtle">Pick the template this calendar week should run. It only affects this week.</p>
+    <div id="weekPickList" class="swap-list"></div>
+  </div>
+</div>
+
+<!-- ===== WEEK TEMPLATE EDITOR ===== -->
+<div id="weekEditSheet" class="sheet-overlay hidden" onclick="if(event.target===this)closeWeekEditor()">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h2>Week template</h2>
+    <label>Name</label>
+    <input id="weekEditName" type="text" placeholder="e.g. Glute focus · 45 min" onchange="weekEditMeta()" />
+    <label>Focus / notes</label>
+    <input id="weekEditFocus" type="text" placeholder="e.g. Low time, glute emphasis" onchange="weekEditMeta()" />
+    <label>Days — tap one to choose its workout</label>
+    <div id="weekEditDays" class="swap-list"></div>
+    <button class="btn-accent wide" onclick="closeWeekEditor()">Done</button>
+    <button class="btn-outline danger wide" style="margin-top:10px" onclick="deleteWeekTemplate()">Delete this template</button>
+  </div>
+</div>
+
+<!-- ===== SAVE THIS DAY TO LIBRARY ===== -->
+<div id="saveDaySheet" class="sheet-overlay hidden" onclick="if(event.target===this)closeSheets()">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h2>Save to library</h2>
+    <p class="subtle">Keep today's version so you can drop it into any day later.</p>
+    <label>Name</label>
+    <input id="saveDayName" type="text" placeholder="e.g. Heavy Legs (short)" />
+    <button class="btn-accent wide" onclick="saveDayAsNew()">Save as a new workout</button>
+    <button id="saveDayOver" class="btn-outline wide" style="margin-top:10px" onclick="saveDayOverwrite()">Update the original</button>
+  </div>
+</div>
+
+<!-- ===== EXERCISE PICKER (editor) ===== -->
+<div id="exPickSheet" class="sheet-overlay hidden" onclick="if(event.target===this)closeExPicker()">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h2 id="exPickTitle">Pick an exercise</h2>
+    <input id="exPickSearch" type="text" placeholder="Search all exercises…" oninput="renderExPickList()" />
+    <details>
+      <summary>＋ Create a new exercise</summary>
+      <label>Name</label>
+      <input id="exPickNew" type="text" placeholder="e.g. Landmine Squat" />
+      <div class="grid-2">
+        <div>
+          <label>Main muscle</label>
+          <select id="exPickMuscle">
+            <option value="quads">Quads</option><option value="glutes">Glutes</option>
+            <option value="hamstrings">Hamstrings</option><option value="calves">Calves</option>
+            <option value="lats">Lats</option><option value="back">Back</option>
+            <option value="shoulders">Shoulders</option><option value="core">Core</option>
+            <option value="obliques">Obliques</option><option value="cardio">Cardio</option>
+          </select>
+        </div>
+        <div>
+          <label>Type</label>
+          <select id="exPickLoad">
+            <option value="weight">Weighted</option>
+            <option value="bw">Bodyweight</option>
+            <option value="time">Timed (seconds)</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn-accent wide" onclick="createExFromPicker()">Create &amp; use it</button>
+    </details>
+    <div id="exPickList" class="swap-list"></div>
+  </div>
+</div>
+
+<!-- ===== WORKOUT EDITOR ===== -->
+<div id="editorView" class="editor hidden">
+  <div class="editor-bar">
+    <button class="link-btn" onclick="closeEditor(false)">Cancel</button>
+    <strong>Edit workout</strong>
+    <button class="link-btn accent" onclick="closeEditor(true)">Save</button>
+  </div>
+  <div class="editor-body">
+    <label>Name</label>
+    <input id="edName" type="text" onchange="edSyncMeta()" />
+    <div class="grid-2">
+      <div><label>Focus</label><input id="edFocus" type="text" placeholder="e.g. Glutes · Hamstrings" onchange="edSyncMeta()" /></div>
+      <div><label>Minutes</label><input id="edMinutes" type="number" min="0" max="180" step="5" onchange="edSyncMeta()" /></div>
+    </div>
+
+    <div id="edBlocks"></div>
+
+    <div class="btn-row">
+      <button class="btn-outline" onclick="edAddBlock('warmup')">＋ Warm-up</button>
+      <button class="btn-outline" onclick="edAddBlock('superset')">＋ Superset</button>
+      <button class="btn-outline" onclick="edAddBlock('circuit')">＋ Circuit</button>
+    </div>
+    <button class="btn-accent wide" style="margin-top:16px" onclick="closeEditor(true)">Save workout</button>
+    <div class="bottom-spacer"></div>
+  </div>
+</div>
+
+<script src="js/data.js?v=3"></script>
 <script src="js/progression.js?v=3"></script>
-<script src="js/app.js?v=6"></script>
+<script src="js/library.js?v=1"></script>
+<script src="js/app.js?v=7"></script>
 <script>
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 </script>
