@@ -21,6 +21,14 @@ Sunday, empty slots being rest days. Build one per focus or time budget
 ("Glute focus · 50 min", "Low time · 30 min") and assign it to any calendar
 week from the Week tab.
 
+**Shipped workouts** arrive with app updates and land in the library once
+(`plan.seeded` records which packs have applied). Anything you delete stays
+deleted, and your edits are never overwritten. The current pack adds a
+back-safe set, glute and leg days, 30 minute versions, and cardio, plus three
+week templates — Working Around It, Low Time · 30 min, and Glute Focus. New
+week templates are added but left out of the rotation; they only run when you
+assign them.
+
 **Rotation** covers weeks you haven't assigned: they cycle through whichever
 templates you've marked for rotation, in order. That's what keeps the
 original Week A / Week B alternation running with no upkeep.
