@@ -43,15 +43,20 @@ function libWorkoutsHtml() {
   if (!list.length) html += `<p class="empty">No workouts match.</p>`;
 
   html += list.map(w => `
-    <div class="lib-card" onclick="openWorkoutEditorById('${w.id}')">
-      <div class="lib-body">
+    <div class="lib-card">
+      <div class="lib-body" onclick="openWorkoutEditorById('${w.id}')">
         <strong>${esc(w.name)}</strong>
         <span class="subtle">${esc(w.focus || workoutSummary(w))}</span>
         <span class="lib-meta">~${w.minutes || 45}m · ${workoutSummary(w)}${
           workoutUsage(w.id).length ? ' · in ' + esc(workoutUsage(w.id).join(', ')) : ' · not in any week'}</span>
+        <div class="lib-actions">
+          <button class="link-btn accent" onclick="event.stopPropagation();openAddToWeek('${w.id}')">＋ add to a week</button>
+          <span class="spacer"></span>
+          <button class="link-btn" onclick="event.stopPropagation();openWorkoutEditorById('${w.id}')">edit</button>
+          <button class="link-btn" onclick="event.stopPropagation();duplicateWorkout('${w.id}')">copy</button>
+          <button class="link-btn danger" onclick="event.stopPropagation();deleteWorkout('${w.id}')">delete</button>
+        </div>
       </div>
-      <button class="link-btn" onclick="event.stopPropagation();duplicateWorkout('${w.id}')">copy</button>
-      <button class="link-btn danger" onclick="event.stopPropagation();deleteWorkout('${w.id}')">delete</button>
     </div>`).join('');
   return html;
 }
@@ -223,6 +228,78 @@ function deleteWeekTemplate() {
   saveLibrary(); savePlan();
   document.getElementById('weekEditSheet').classList.add('hidden');
   renderLibrary(); renderSchedule(); renderWeek();
+}
+
+/* ── Add a workout straight into a week, from the Library ─────
+   Two stages in one sheet: which week, then which day. "This week"
+   and "next week" pin the single date; a template changes that day
+   in every week running it. */
+let addWeekCtx = null;
+
+function openAddToWeek(workoutId) {
+  addWeekCtx = { workoutId, target: null };
+  renderAddToWeek();
+  document.getElementById('addWeekSheet').classList.remove('hidden');
+}
+
+function renderAddToWeek() {
+  const w = workoutById(addWeekCtx.workoutId);
+  if (!w) return;
+  const mon = mondayOf(new Date());
+  const next = addDays(mon, 7);
+
+  if (!addWeekCtx.target) {
+    document.getElementById('addWeekTitle').textContent = 'Add ' + w.name;
+    document.getElementById('addWeekNote').textContent = 'Where should it go?';
+    document.getElementById('addWeekList').innerHTML =
+      `<div class="swap-section">One week only</div>
+       <div class="swap-item" onclick="pickAddTarget('date:${iso(mon)}')">
+         <strong>This week</strong><span class="tag">${esc(fmtShort(mon))} – ${esc(fmtShort(addDays(mon, 6)))}</span></div>
+       <div class="swap-item" onclick="pickAddTarget('date:${iso(next)}')">
+         <strong>Next week</strong><span class="tag">${esc(fmtShort(next))} – ${esc(fmtShort(addDays(next, 6)))}</span></div>
+       <div class="swap-section">Every week running a template</div>` +
+      library.weeks.map(wk => `<div class="swap-item" onclick="pickAddTarget('week:${wk.id}')">
+         <strong>${esc(wk.name)}</strong>
+         <span class="tag">${[1,2,3,4,5,6,0].filter(dw => workoutById(wk.days[dw])).length}d</span></div>`).join('');
+    return;
+  }
+
+  const [kind, val] = addWeekCtx.target.split(':');
+  const order = [1, 2, 3, 4, 5, 6, 0];
+  const label = kind === 'week' ? weekById(val).name : 'week of ' + fmtShort(new Date(val + 'T12:00'));
+  document.getElementById('addWeekTitle').textContent = 'Which day?';
+  document.getElementById('addWeekNote').textContent = w.name + ' → ' + label;
+  document.getElementById('addWeekList').innerHTML =
+    `<div class="swap-item" onclick="backToAddTarget()"><strong>‹ Back</strong></div>` +
+    order.map(dw => {
+      let cur;
+      if (kind === 'week') { const x = workoutById(weekById(val).days[dw]); cur = x ? x.name : 'Rest'; }
+      else cur = dayFor(new Date(iso(addDays(new Date(val + 'T12:00'), (dw + 6) % 7)) + 'T12:00')).name;
+      return `<div class="swap-item" onclick="confirmAddToWeek(${dw})">
+        <strong>${DOW_FULL[dw]}</strong><span class="tag">${esc(cur)}</span></div>`;
+    }).join('');
+}
+
+function pickAddTarget(t) { addWeekCtx.target = t; renderAddToWeek(); }
+function backToAddTarget() { addWeekCtx.target = null; renderAddToWeek(); }
+
+function confirmAddToWeek(dw) {
+  const { workoutId, target } = addWeekCtx;
+  const [kind, val] = target.split(':');
+  if (kind === 'week') {
+    const wk = weekById(val);
+    if (!wk || wk.id === '__rest') return;
+    wk.days[dw] = workoutId;
+    saveLibrary();
+  } else {
+    const date = iso(addDays(new Date(val + 'T12:00'), (dw + 6) % 7));
+    days[date] = detachWorkout(workoutById(workoutId));
+    saveDays();
+  }
+  closeSheets();
+  renderLibrary(); renderSchedule(); renderWeek();
+  const w = workoutById(workoutId);
+  alert(w.name + ' added to ' + DOW_FULL[dw] + ' ✓');
 }
 
 // ── Assign a week template to a calendar week ─────────────────
@@ -503,7 +580,21 @@ function renderEditor() {
   }).join('');
 }
 
-function edBlockField(bi, f, v) { ed.draft.blocks[bi][f] = v; if (f === 'type') renderEditor(); }
+function edBlockField(bi, f, v) {
+  const b = ed.draft.blocks[bi];
+  b[f] = v;
+  // rounds and per-exercise sets are the same number — keep them together,
+  // otherwise the day view still shows the old number of set rows
+  if (f === 'rounds') {
+    for (const it of (b.items || [])) it.sets = v;
+    renderEditor();
+  }
+  if (f === 'type') {
+    if (v === 'warmup' && !b.steps) b.steps = [{ text: '', amount: '' }];
+    if (v !== 'warmup' && !b.items) { b.items = []; b.rounds = b.rounds || 3; b.rest = b.rest || 60; }
+    renderEditor();
+  }
+}
 function edItemField(bi, ii, f, v) { ed.draft.blocks[bi].items[ii][f] = v; }
 function edItemWeight(bi, ii, v) {
   const it = ed.draft.blocks[bi].items[ii];
