@@ -393,23 +393,13 @@ function renderBlock(dateStr, block, log) {
   const meta = `${block.rounds} rounds, ${block.rest}s rest`;
   const items = skipped ? '' : block.items.map((item, i) => renderExercise(dateStr, block, i, log)).join('');
 
-  const rounds = skipped ? '' : `
-    <div class="rounds-ctl">
-      <button onclick="bumpRounds('${dateStr}','${block.id}',-1)" ${block.rounds <= 1 ? 'disabled' : ''}>−</button>
-      <span>${block.rounds} round${block.rounds === 1 ? '' : 's'}</span>
-      <button onclick="bumpRounds('${dateStr}','${block.id}',1)">＋</button>
-      <span class="spacer"></span>
-      <span class="subtle">${block.rest}s rest</span>
-    </div>`;
-
   return `<div class="block ${skipped ? 'skipped' : ''}">
     <div class="block-head">
       <span class="block-chip ${block.type}">${chip}</span>
       <h3>${esc(block.name)}</h3>
       <button class="link-btn" onclick="toggleSkip('${dateStr}','${block.id}')">${skipped ? 'unskip' : 'skip'}</button>
     </div>
-    ${block.note ? `<div class="block-note">${esc(block.note)}</div>` : ''}
-    ${rounds}
+    <div class="block-note">${esc(block.note || meta)}</div>
     ${items}
     ${skipped ? '' : `<button class="add-ex-btn" onclick="openAddExercise('${block.id}')">＋ Add exercise</button>`}
   </div>`;
@@ -696,21 +686,6 @@ async function editDay(dateStr, title, fn, todayLabel, libLabel) {
   return true;
 }
 
-// Drop or add a round on one block. Rounds and each exercise's set count
-// are the same thing, so they move together.
-function bumpRounds(dateStr, blockId, delta) {
-  const cur = blockOn(dateStr, blockId);
-  if (!cur) return;
-  const next = Math.max(1, Math.min(20, (cur.rounds || 1) + delta));
-  if (next === cur.rounds) return;
-  editDay(dateStr, (delta < 0 ? 'Drop a round from ' : 'Add a round to ') + cur.name, w => {
-    const b = w.blocks.find(x => x.id === blockId);
-    if (!b) return;
-    b.rounds = next;
-    for (const it of (b.items || [])) it.sets = next;
-  });
-}
-
 function revertDay(dateStr) {
   if (!days[dateStr]) return;
   if (!confirm('Drop this day’s custom version and go back to what your week template says?')) return;
@@ -730,7 +705,8 @@ function openSwap(dateStr, blockId, itemIdx) {
 
   const src = daySource(dateStr);
   document.getElementById('swapScopeRow').classList.toggle('hidden', src !== 'library');
-  document.getElementById('swapAlwaysLabel').textContent = 'Save to “' + day.name + '”';
+  const always = document.querySelector('input[name="swapScope"][value="always"]');
+  if (always) always.parentElement.lastChild.textContent = ' Save to “' + day.name + '”';
   const today = document.querySelector('input[name="swapScope"][value="today"]');
   if (today) today.checked = true;
 
@@ -907,8 +883,8 @@ function confirmAddBlock() {
 }
 
 function closeSheets() {
-  for (const id of ['swapSheet', 'addSheet', 'blockSheet', 'moveSheet',
-                    'pickSheet', 'saveDaySheet', 'weekPickSheet', 'weekEditSheet'])
+  for (const id of ['swapSheet', 'addSheet', 'blockSheet', 'moveSheet', 'pickSheet',
+                    'saveDaySheet', 'weekPickSheet', 'weekEditSheet', 'addWeekSheet'])
     document.getElementById(id)?.classList.add('hidden');
 }
 
@@ -920,17 +896,12 @@ function openMove() { openMoveFor(iso(selectedDate)); }
 function openMoveFor(dateStr) {
   const d = new Date(dateStr + 'T12:00');
   const week = weekFor(d);
-  moveCtx = { weekId: week ? week.id : null, dow: d.getDay(), dateStr, monday: iso(mondayOf(d)) };
-  // names come from what each date actually resolves to, so a this-day-only
-  // version shows up here rather than the template's version
-  const dateOfDow = dw => iso(addDays(mondayOf(d), (dw + 6) % 7));
-  const nameOf = dw => dayFor(new Date(dateOfDow(dw) + 'T12:00')).name;
-
+  if (!week) { alert('No week template is set for this week yet.'); return; }
+  moveCtx = { weekId: week.id, dow: d.getDay() };
+  const nameOf = dw => { const w = workoutById(week.days[dw]); return w ? w.name : 'Rest'; };
   document.getElementById('moveTitle').textContent = 'Move ' + nameOf(moveCtx.dow);
   document.getElementById('moveNote').textContent =
-    week && week.id !== '__rest'
-      ? 'You’ll be asked whether this is just this week or a change to “' + week.name + '”.'
-      : 'This changes this week only.';
+    'This reorders “' + week.name + '”, so it applies to every week using that template.';
   const order = [1, 2, 3, 4, 5, 6, 0]; // Mon … Sun
   document.getElementById('moveList').innerHTML = order.map(dw => {
     const isCur = dw === moveCtx.dow;
@@ -943,73 +914,20 @@ function openMoveFor(dateStr) {
   document.getElementById('moveSheet').classList.remove('hidden');
 }
 
-function restInstance() {
-  return { id: newId('d'), sourceId: null, name: 'Rest Day', focus: 'Recovery', minutes: 0, blocks: [], rest: true };
-}
-
-async function confirmMove(targetDow) {
-  const { weekId, dow, dateStr } = moveCtx;
+function confirmMove(targetDow) {
+  const { weekId, dow } = moveCtx;
   const week = weekById(weekId);
+  if (!week) return;
+  // the two days trade places, so nothing is ever lost
+  [week.days[dow], week.days[targetDow]] = [week.days[targetDow], week.days[dow]];
+  saveLibrary();
   closeSheets();
-  const d = new Date(dateStr + 'T12:00');
-  const targetDate = iso(addDays(mondayOf(d), (targetDow + 6) % 7));
-
-  const choice = await askScope(dateStr, 'Move workout', 'Just this week',
-    week && week.id !== '__rest' ? 'Swap these days in ' + week.name : null, true);
-  if (!choice) return;
-
-  if (choice === 'library' && week && week.id !== '__rest') {
-    // reorder the template: applies to every week running it
-    [week.days[dow], week.days[targetDow]] = [week.days[targetDow], week.days[dow]];
-    // any this-day-only version travels with its workout rather than
-    // being dropped or left masking the wrong day
-    const ai = days[dateStr], bi = days[targetDate];
-    if (bi) days[dateStr] = bi; else delete days[dateStr];
-    if (ai) days[targetDate] = ai; else delete days[targetDate];
-    saveLibrary(); saveDays();
-  } else {
-    // this week only: pin both dates to what they show now, swapped
-    const a = dayFor(d);
-    const b = dayFor(new Date(targetDate + 'T12:00'));
-    const ai = a.rest ? restInstance() : detachWorkout(a);
-    const bi = b.rest ? restInstance() : detachWorkout(b);
-    days[dateStr] = bi;
-    days[targetDate] = ai;
-    saveDays();
-  }
   renderSchedule();
   renderWeek();
 }
 
 // ── Week view ─────────────────────────────────────────────────
 function shiftWeek(n) { weekOffset += n; renderWeek(); }
-
-// Which day cards are expanded to show their exercises
-const weekOpen = new Set();
-function toggleWeekDetail(ds) {
-  if (weekOpen.has(ds)) weekOpen.delete(ds); else weekOpen.add(ds);
-  renderWeek();
-}
-
-// What's actually inside a day, without opening it
-function workoutDetailHtml(w) {
-  const rows = (w.blocks || []).map(b => {
-    if (b.type === 'warmup')
-      return `<div class="wd-block"><span class="wd-kind warmup">WARM-UP</span>
-        <span class="wd-name">${esc(b.name)}</span>
-        <span class="wd-meta">${(b.steps || []).length} steps</span></div>`;
-    const items = (b.items || []).map(it => {
-      const ex = exById(it.ex);
-      const unit = ex && ex.repUnit ? ex.repUnit : '';
-      return `<div class="wd-ex"><span>${esc(ex ? ex.name : 'Removed exercise')}</span>
-        <span class="wd-rx">${it.sets}×${it.reps}${unit && unit !== 'rep' ? unit : ''}</span></div>`;
-    }).join('');
-    return `<div class="wd-block"><span class="wd-kind ${b.type}">${b.type === 'circuit' ? 'CIRCUIT' : 'SUPERSET'}</span>
-      <span class="wd-name">${esc(b.name)}</span>
-      <span class="wd-meta">${b.rounds} rounds</span></div>${items}`;
-  }).join('');
-  return `<div class="week-detail">${rows || '<p class="subtle">Nothing in this workout yet.</p>'}</div>`;
-}
 
 function renderWeek() {
   const monday = addDays(mondayOf(new Date()), weekOffset * 7);
@@ -1041,21 +959,11 @@ function renderWeek() {
       isDayDone(ds) ? '<span class="pill done">DONE</span>' :
       c.done > 0 ? `<span class="pill">${c.done}/${c.total} sets</span>` : '';
     const tag = days[ds] ? '<span class="pill edited">DAY</span>' : '';
-    const open = weekOpen.has(ds);
-    html += `<div class="week-card ${isTrain ? 'train' : ''} ${ds === today ? 'today' : ''}">
-      <div class="wc-main" onclick="selectDate('${ds}');showTab('schedule')">
-        <div class="wc-date"><span class="dow">${DOWS[d.getDay()]}</span><span class="dnum">${d.getDate()}</span></div>
-        <div class="wc-body"><strong>${esc(day.name)}</strong><span class="subtle">${esc(day.focus || '')}</span></div>
-        ${tag}${status}
-      </div>
-      <div class="wc-actions">
-        ${isTrain ? `<button class="link-btn" onclick="toggleWeekDetail('${ds}')">${open ? '▾ hide' : '▸ exercises'}</button>` : '<span class="spacer"></span>'}
-        <span class="spacer"></span>
-        <button class="link-btn" onclick="openPickWorkout('${ds}')">change</button>
-        ${isTrain ? `<button class="link-btn" onclick="openMoveFor('${ds}')">move</button>` : ''}
-        ${isTrain ? `<button class="link-btn" onclick="editDayWorkout('${ds}')">edit</button>` : ''}
-      </div>
-      ${open && isTrain ? workoutDetailHtml(day) : ''}
+    html += `<div class="week-card ${isTrain ? 'train' : ''} ${ds === today ? 'today' : ''}" onclick="selectDate('${ds}');showTab('schedule')">
+      <div class="wc-date"><span class="dow">${DOWS[d.getDay()]}</span><span class="dnum">${d.getDate()}</span></div>
+      <div class="wc-body"><strong>${esc(day.name)}</strong><span class="subtle">${esc(day.focus || '')}</span></div>
+      ${tag}${status}
+      <button class="link-btn" onclick="event.stopPropagation();openPickWorkout('${ds}')">change</button>
     </div>`;
   }
   document.getElementById('weekCards').innerHTML = html;
@@ -1279,7 +1187,6 @@ function importData(event) {
       if (data.logs)     { logs = data.logs; saveLogs(); }
       if (data.customs)  { customs = data.customs; saveCustoms(); }
       if (data.unitOverrides) { unitOverrides = data.unitOverrides; saveUnits(); }
-      applySeedPacks();   // an older backup won't have the shipped workouts
       alert('Backup imported ✓');
       renderSchedule(); renderSettings();
     } catch {
