@@ -14,7 +14,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-180.png" />
   <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="style.css?v=6" />
+  <link rel="stylesheet" href="style.css?v=7" />
 </head>
 <body>
 
@@ -167,7 +167,7 @@
     <h2 id="swapTitle">Swap exercise</h2>
     <div class="swap-scope" id="swapScopeRow">
       <label><input type="radio" name="swapScope" value="today" checked /> Just today</label>
-      <label><input type="radio" name="swapScope" value="always" /> Save to the workout</label>
+      <label><input type="radio" name="swapScope" value="always" /> <span id="swapAlwaysLabel">Save to the workout</span></label>
     </div>
     <input id="swapSearch" type="text" placeholder="Search all exercises…" oninput="renderSwapList()" />
 
@@ -298,6 +298,16 @@
   </div>
 </div>
 
+<!-- ===== ADD A WORKOUT TO A WEEK (from Library) ===== -->
+<div id="addWeekSheet" class="sheet-overlay hidden" onclick="if(event.target===this)closeSheets()">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h2 id="addWeekTitle">Add to a week</h2>
+    <p class="subtle" id="addWeekNote"></p>
+    <div id="addWeekList" class="swap-list"></div>
+  </div>
+</div>
+
 <!-- ===== WEEK TEMPLATE PICKER ===== -->
 <div id="weekPickSheet" class="sheet-overlay hidden" onclick="if(event.target===this)closeSheets()">
   <div class="sheet">
@@ -403,8 +413,8 @@
 <script src="js/data.js?v=3"></script>
 <script src="js/packs.js?v=1"></script>
 <script src="js/progression.js?v=3"></script>
-<script src="js/library.js?v=2"></script>
-<script src="js/app.js?v=8"></script>
+<script src="js/library.js?v=3"></script>
+<script src="js/app.js?v=9"></script>
 <script>
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 </script>
