@@ -23,6 +23,9 @@ const BUILTIN_EXERCISES = [
   { id: 'belt-squat',        name: 'Belt Squat',                pattern: 'squat',  muscles: ['quads', 'glutes'], equip: 'machine',   load: 'weight', inc: 10 },
   { id: 'leg-press',         name: 'Leg Press',                 pattern: 'squat',  muscles: ['quads', 'glutes'], equip: 'machine',   load: 'weight', inc: 10 },
   { id: 'heels-db-squat',    name: 'Heels-Elevated DB Squat',   pattern: 'squat',  muscles: ['quads'],           equip: 'dumbbell',  load: 'weight', inc: 5 },
+  { id: 'pause-squat',       name: 'Pause Back Squat',          pattern: 'squat',  muscles: ['quads', 'glutes'], equip: 'barbell',   load: 'weight', inc: 5 },
+  { id: 'box-squat',         name: 'Box Squat',                 pattern: 'squat',  muscles: ['glutes', 'quads'], equip: 'barbell',   load: 'weight', inc: 5 },
+  { id: 'landmine-squat',    name: 'Landmine Squat',            pattern: 'squat',  muscles: ['quads', 'glutes'], equip: 'barbell',   load: 'weight', inc: 5 },
   { id: 'box-jump',          name: 'Box Jump',                  pattern: 'squat',  muscles: ['quads', 'glutes'], equip: 'bodyweight', load: 'bw' },
   { id: 'jumping-squat',     name: 'Jumping Squat',             pattern: 'squat',  muscles: ['quads'],           equip: 'bodyweight', load: 'bw' },
 
@@ -31,6 +34,9 @@ const BUILTIN_EXERCISES = [
   { id: 'power-clean',       name: 'Power Clean',               pattern: 'olympic', muscles: ['legs', 'back', 'shoulders'], equip: 'barbell', load: 'weight', inc: 5 },
   { id: 'clean-jerk',        name: 'Clean & Jerk',              pattern: 'olympic', muscles: ['legs', 'shoulders', 'back'], equip: 'barbell', load: 'weight', inc: 5 },
   { id: 'push-jerk',         name: 'Push Jerk',                 pattern: 'olympic', muscles: ['shoulders', 'legs'],         equip: 'barbell', load: 'weight', inc: 5 },
+  { id: 'hang-snatch',       name: 'Barbell Hang Snatch',       pattern: 'olympic', muscles: ['shoulders', 'legs', 'back'], equip: 'barbell', load: 'weight', inc: 5 },
+  { id: 'db-snatch',         name: 'Single-Arm DB Snatch',      pattern: 'olympic', muscles: ['shoulders', 'legs', 'back'], equip: 'dumbbell', load: 'weight', inc: 5 },
+  { id: 'clean-pull',        name: 'Clean Pull',                pattern: 'olympic', muscles: ['back', 'legs'],              equip: 'barbell', load: 'weight', inc: 10 },
 
   // Lunge / unilateral
   { id: 'walking-lunge',     name: 'Walking Lunge',             pattern: 'lunge',  muscles: ['quads', 'glutes'], equip: 'dumbbell',  load: 'weight', inc: 5 },
@@ -114,6 +120,7 @@ const BUILTIN_EXERCISES = [
   { id: 'db-press',          name: 'DB Shoulder Press',         pattern: 'press',  muscles: ['shoulders'],       equip: 'dumbbell',  load: 'weight', inc: 5 },
   { id: 'thruster',          name: 'Thrusters',                 pattern: 'press',  muscles: ['legs', 'shoulders'], equip: 'barbell', load: 'weight', inc: 5 },
   { id: 'db-thruster',       name: 'DB Thrusters',              pattern: 'press',  muscles: ['legs', 'shoulders'], equip: 'dumbbell', load: 'weight', inc: 5 },
+  { id: 'landmine-press',    name: 'Landmine Press',            pattern: 'press',  muscles: ['shoulders', 'core'], equip: 'barbell',  load: 'weight', inc: 5 },
   { id: 'pike-pushup',       name: 'Pike Push-Up',              pattern: 'press',  muscles: ['shoulders', 'core'], equip: 'bodyweight', load: 'bw' },
   { id: 'hspu-wall',         name: 'Wall Handstand Push-Up',    pattern: 'press',  muscles: ['shoulders'],       equip: 'bodyweight', load: 'bw' },
 

@@ -23,11 +23,18 @@ week from the Week tab.
 
 **Shipped workouts** arrive with app updates and land in the library once
 (`plan.seeded` records which packs have applied). Anything you delete stays
-deleted, and your edits are never overwritten. The current pack adds a
-back-safe set, glute and leg days, 30 minute versions, and cardio, plus three
-week templates — Working Around It, Low Time · 30 min, and Glute Focus. New
-week templates are added but left out of the rotation; they only run when you
-assign them.
+deleted, and your edits are never overwritten. The packs so far:
+
+- a back-safe set, glute and leg days, 30 minute versions, and cardio, plus
+  the Working Around It, Low Time · 30 min, and Glute Focus templates
+- ten more full sessions — pause squats, power cleans, trap bar pulls,
+  thrusters, high-rep squats, snatch-grip pulls, heavy hip thrusts, push
+  press, and two conditioning days — as the Power & Tempo and Volume & Sweat
+  templates
+
+New week templates are left out of the rotation and only run when you assign
+them, unless the pack sets `rotate: true` (Power & Tempo and Volume & Sweat
+do, which is what turns the old A/B alternation into a four-week cycle).
 
 **Rotation** covers weeks you haven't assigned: they cycle through whichever
 templates you've marked for rotation, in order. That's what keeps the
