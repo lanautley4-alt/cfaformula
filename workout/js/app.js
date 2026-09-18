@@ -18,6 +18,48 @@ function lsGet(key, fallback) {
 }
 function lsSet(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
 
+// ── Automatic restore point ───────────────────────────────────
+// Before an app update is allowed to touch stored data, the current
+// state is copied aside. Settings can put it back with one tap, so an
+// update can never be the reason progress is lost.
+const APP_VERSION = '2026.09.18';
+const K_SNAPSHOT  = 'wt_restore_point';
+const K_UNDO      = 'wt_restore_undo';
+const DATA_KEYS = [K_SETTINGS, K_PROGRAM, K_LIBRARY, K_PLAN, K_DAYS, K_LOGS, K_CUSTOM, K_UNITS];
+
+function currentData() {
+  const data = {};
+  for (const k of DATA_KEYS) {
+    const v = localStorage.getItem(k);
+    if (v !== null) data[k] = v;
+  }
+  return data;
+}
+
+function takeSnapshot(reason) {
+  try {
+    localStorage.setItem(K_SNAPSHOT, JSON.stringify({
+      version: APP_VERSION, at: new Date().toISOString(), reason, data: currentData(),
+    }));
+    return true;
+  } catch { return false; } // storage full — keep the older restore point
+}
+
+(function autoRestorePoint() {
+  const snap = lsGet(K_SNAPSHOT, null);
+  const hasData = DATA_KEYS.some(k => localStorage.getItem(k) !== null);
+  if (!hasData) {
+    // fresh install: nothing to protect, just record which version we are on
+    try {
+      localStorage.setItem(K_SNAPSHOT, JSON.stringify({
+        version: APP_VERSION, at: new Date().toISOString(), reason: 'fresh install', data: {},
+      }));
+    } catch { /* ignore */ }
+    return;
+  }
+  if (!snap || snap.version !== APP_VERSION) takeSnapshot('before update ' + APP_VERSION);
+})();
+
 let settings = lsGet(K_SETTINGS, { restTimer: true, autoProgress: true });
 let logs     = lsGet(K_LOGS, {});
 let customs  = lsGet(K_CUSTOM, []);
@@ -1248,6 +1290,67 @@ function renderSettings() {
   document.getElementById('setRestTimer').checked = !!settings.restTimer;
   document.getElementById('setAutoProgress').checked = !!settings.autoProgress;
   document.getElementById('setUnits').value = settings.units || 'lbs';
+  renderRestorePoint();
+}
+
+// ── Restore point ─────────────────────────────────────────────
+function stamp(iso8601) {
+  const d = new Date(iso8601);
+  return MONTHS[d.getMonth()] + ' ' + d.getDate() + ', ' +
+    d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+
+function countLoggedDays(rawLogs) {
+  try {
+    const l = JSON.parse(rawLogs || '{}');
+    return Object.values(l).filter(d => d && d.sets && Object.values(d.sets)
+      .some(s => Array.isArray(s) && s.some(x => x && x.done))).length;
+  } catch { return 0; }
+}
+
+function renderRestorePoint() {
+  const el = document.getElementById('restoreInfo');
+  if (!el) return;
+  const snap = lsGet(K_SNAPSHOT, null);
+  const undo = lsGet(K_UNDO, null);
+  const has = snap && snap.data && Object.keys(snap.data).length;
+  el.innerHTML = has
+    ? `Restore point saved <strong>${stamp(snap.at)}</strong> — ${countLoggedDays(snap.data[K_LOGS])} logged workouts
+       <span class="subtle">(${snap.reason})</span>`
+    : 'No restore point yet — it is taken automatically the first time you log a workout and before every app update.';
+  const btn = document.getElementById('undoRestoreBtn');
+  if (btn) btn.classList.toggle('hidden', !undo);
+}
+
+function saveRestorePoint() {
+  alert(takeSnapshot('saved by you')
+    ? 'Restore point saved. You can come back to exactly this state from here.'
+    : 'Could not save a restore point — this device is out of storage space.');
+  renderRestorePoint();
+}
+
+function restoreSnapshot() {
+  const snap = lsGet(K_SNAPSHOT, null);
+  if (!snap || !snap.data || !Object.keys(snap.data).length) {
+    alert('There is no restore point saved yet.');
+    return;
+  }
+  if (!confirm('Put everything back to the restore point from ' + stamp(snap.at) + '?\n\n' +
+               'Anything logged since then is set aside, and you can undo this right after.')) return;
+  try { localStorage.setItem(K_UNDO, JSON.stringify({ at: new Date().toISOString(), data: currentData() })); } catch { /* ignore */ }
+  for (const k of DATA_KEYS) localStorage.removeItem(k);
+  for (const [k, v] of Object.entries(snap.data)) localStorage.setItem(k, v);
+  location.reload();
+}
+
+function undoRestore() {
+  const undo = lsGet(K_UNDO, null);
+  if (!undo || !undo.data) { alert('Nothing to undo.'); return; }
+  if (!confirm('Undo the restore and go back to how things were before it?')) return;
+  for (const k of DATA_KEYS) localStorage.removeItem(k);
+  for (const [k, v] of Object.entries(undo.data)) localStorage.setItem(k, v);
+  localStorage.removeItem(K_UNDO);
+  location.reload();
 }
 
 function saveSettings() {
