@@ -587,4 +587,169 @@ const PACK_2026_09B = {
   ],
 };
 
-const SEED_PACKS = [PACK_2026_09, PACK_2026_09B];
+// ── Pack 3: full body ────────────────────────────────────────
+// Sessions that cover legs, a pull, an overhead press and core in one
+// go — for weeks with fewer training days, a packed gym, or travel.
+// Left out of the rotation on purpose: assign a full body week from
+// the Week tab, or tap "rotation" on one in the Library.
+const PACK_2026_09C = {
+  id: 'pack-2026-09c',
+
+  workouts: [
+    {
+      id: 'w-fb-squat-pull', name: 'Full Body · Squat & Pull', minutes: 50,
+      focus: 'Back Squat · Pull-Up · Hinge · Core',
+      blocks: [
+        pkW('fsp-wu', 'Warm-up', WU_LEGS),
+        pkB('fsp-a', 'superset', 'Squat + Pull-Up', 4, 120, [
+          pkX('back-squat', 4, 6, '7-8', 95), pkX('pull-up', 4, 6, '8'),
+        ], 'The big pair. Take the full two minutes between rounds.'),
+        pkB('fsp-b', 'superset', 'Hinge + Pulldown', 3, 90, [
+          pkX('rdl', 3, 8, '7-8', 95), pkX('lat-pulldown', 3, 10, '7-8', 70),
+        ]),
+        pkB('fsp-c', 'superset', 'Lunge + Rear Delt', 3, 60, [
+          pkX('walking-lunge', 3, 10, '6-7', 20), pkX('face-pull', 3, 15, '6-7', 25),
+        ]),
+        pkB('fsp-d', 'circuit', 'Core Finisher', 2, 45, [
+          pkX('hanging-knee', 2, 12), pkX('side-plank', 2, 30),
+        ]),
+      ],
+    },
+    {
+      id: 'w-fb-hinge-press', name: 'Full Body · Hinge & Press', minutes: 50,
+      focus: 'Deadlift · Push Press · Row · Core',
+      blocks: [
+        pkW('fhp-wu', 'Warm-up', [
+          { text: 'Cat-Cow', amount: '10' },
+          { text: '90/90 Hip Switches', amount: '10' },
+          { text: 'Band Pull-Aparts', amount: '15' },
+          { text: 'Band Overhead Press', amount: '12' },
+          { text: 'Light deadlifts, then empty bar push press', amount: '8 each' },
+          { text: 'Work up over 2-3 warm-up sets', amount: '' },
+        ]),
+        pkB('fhp-a', 'superset', 'Deadlift + Push Press', 4, 120, [
+          pkX('deadlift', 4, 5, '7-8', 135), pkX('push-press', 4, 6, '7-8', 55),
+        ], 'Pull, then press. Both are legs-first movements — stay braced.'),
+        pkB('fhp-b', 'superset', 'Split Squat + Row', 3, 90, [
+          pkX('bulgarian-split', 3, 10, '7-8', 25), pkX('cs-row', 3, 12, '7-8', 60),
+        ]),
+        pkB('fhp-c', 'circuit', 'Swing + Climb', 3, 60, [
+          pkX('kb-swing', 3, 15, '6-7', 35), pkX('mountain-climber', 3, 30),
+        ]),
+        pkB('fhp-d', 'circuit', 'Core Finisher', 2, 45, [
+          pkX('ab-wheel', 2, 12), pkX('pallof-press', 2, 10, '6-7', 20),
+        ]),
+      ],
+    },
+    {
+      id: 'w-fb-clean-carry', name: 'Full Body · Clean & Carry', minutes: 48,
+      focus: 'Hang Clean · Front Squat · Chin-Up · Carries',
+      blocks: [
+        pkW('fcc-wu', 'Warm-up', [
+          { text: 'Jump Rope (easy pace)', amount: '1:00' },
+          { text: 'Wrist circles & front-rack stretch', amount: ':45' },
+          { text: 'Band Pull-Aparts', amount: '15' },
+          { text: 'Empty bar hang clean drill (slow)', amount: '8' },
+          { text: 'Empty bar front squats', amount: '8' },
+          { text: 'Build up over 2-3 sets', amount: '' },
+        ]),
+        pkB('fcc-a', 'superset', 'Hang Clean + Hollow', 5, 90, [
+          pkX('hang-clean', 5, 3, '7', 55), pkX('hollow-hold', 5, 20),
+        ], 'Crisp triples — end the set the moment the bar slows down.'),
+        pkB('fcc-b', 'superset', 'Front Squat + Chin-Up', 3, 90, [
+          pkX('front-squat', 3, 8, '7-8', 65), pkX('chin-up', 3, 6, '8'),
+        ]),
+        pkB('fcc-c', 'superset', 'Single-Leg RDL + Carry', 3, 60, [
+          pkX('single-leg-rdl', 3, 10, '7-8', 25), pkX('farmer-carry', 3, 40, '6-7', 35),
+        ]),
+        pkB('fcc-d', 'circuit', 'Core Finisher', 2, 45, [
+          pkX('copenhagen-plank', 2, 20), pkX('dead-bug', 2, 12),
+        ]),
+      ],
+    },
+    {
+      id: 'w-fb-barbell', name: 'Full Body · Barbell Only', minutes: 45,
+      focus: 'One bar, one spot · Squat · Row · Press',
+      blocks: [
+        pkW('fbb-wu', 'Warm-up', WU_QUICK),
+        pkB('fbb-a', 'superset', 'Squat + Row', 4, 90, [
+          pkX('back-squat', 4, 8, '7-8', 85), pkX('barbell-row', 4, 8, '7-8', 65),
+        ], 'Everything today uses the same bar — good for a packed gym.'),
+        pkB('fbb-b', 'superset', 'Hinge + Press', 3, 90, [
+          pkX('rdl', 3, 10, '7-8', 85), pkX('push-press', 3, 8, '7-8', 55),
+        ]),
+        pkB('fbb-c', 'circuit', 'Barbell Complex', 3, 90, [
+          pkX('hang-clean', 3, 5, '6-7', 55), pkX('thruster', 3, 5, '6-7', 55),
+          pkX('good-morning', 3, 5, '6-7', 55),
+        ], 'Do not put the bar down inside a round. Same weight throughout.'),
+        pkB('fbb-d', 'circuit', 'Core Finisher', 2, 45, [
+          pkX('plank', 2, 45), pkX('russian-twist', 2, 20),
+        ]),
+      ],
+    },
+    {
+      id: 'w-fb-dumbbell', name: 'Full Body · Dumbbells Only', minutes: 45,
+      focus: 'Travel or home · Squat · Row · Press · Carry',
+      blocks: [
+        pkW('fbd-wu', 'Warm-up', WU_QUICK),
+        pkB('fbd-a', 'superset', 'Goblet Squat + Row', 4, 60, [
+          pkX('goblet-squat', 4, 12, '7-8', 45), pkX('db-row', 4, 12, '7-8', 35),
+        ]),
+        pkB('fbd-b', 'superset', 'Hinge + Press', 3, 60, [
+          pkX('db-rdl', 3, 12, '7-8', 35), pkX('db-press', 3, 10, '7-8', 20),
+        ]),
+        pkB('fbd-c', 'superset', 'Lunge + Carry', 3, 60, [
+          pkX('reverse-lunge', 3, 10, '7', 25), pkX('suitcase-carry', 3, 40, '6-7', 30),
+        ]),
+        pkB('fbd-d', 'circuit', 'Finisher', 2, 45, [
+          pkX('db-snatch', 2, 10, '7', 25), pkX('plank-taps', 2, 20),
+        ], 'No rest between exercises.'),
+      ],
+    },
+    {
+      id: 'w-fb-metcon', name: 'Full Body Metcon', minutes: 40,
+      focus: 'Breathing hard · Thrusters · Pull-Ups · Swings',
+      blocks: [
+        pkW('fbm-wu', 'Warm-up', WU_QUICK),
+        pkB('fbm-a', 'circuit', 'Engine Circuit', 5, 90, [
+          pkX('thruster', 5, 10, '6-7', 45), pkX('pull-up', 5, 6, '8'), pkX('burpee', 5, 8),
+        ], 'Steady, unbroken sets. 90s between rounds.'),
+        pkB('fbm-b', 'circuit', 'Swings + Row', 3, 60, [
+          pkX('kb-swing', 3, 15, '6-7', 35), pkX('rower', 3, 250),
+        ]),
+        pkB('fbm-c', 'circuit', 'Core Finisher', 3, 45, [
+          pkX('v-up', 3, 12), pkX('hollow-rocks', 3, 15),
+        ]),
+      ],
+    },
+    {
+      id: 'w-fb-express-b', name: 'Express Full Body B', minutes: 30,
+      focus: '30 min · Full body · Trap bar & kettlebell',
+      blocks: [
+        pkW('feb-wu', 'Warm-up', WU_QUICK),
+        pkB('feb-a', 'superset', 'Trap Bar + Pulldown', 4, 60, [
+          pkX('trap-bar-deadlift', 4, 8, '7-8', 135), pkX('lat-pulldown', 4, 10, '7-8', 70),
+        ]),
+        pkB('feb-b', 'superset', 'Goblet Squat + Press', 3, 60, [
+          pkX('goblet-squat', 3, 12, '7-8', 45), pkX('db-press', 3, 10, '7-8', 20),
+        ]),
+        pkB('feb-c', 'circuit', 'Finisher', 2, 45, [
+          pkX('kb-swing', 2, 20, '6-7', 35), pkX('hollow-rocks', 2, 15),
+        ], 'No rest between exercises.'),
+      ],
+    },
+  ],
+
+  weeks: [
+    {
+      id: 'wk-fullbody', name: 'Full Body · 50 min', focus: 'Three full body days with conditioning between',
+      days: { 1: 'w-fb-squat-pull', 2: 'w-cardio-circuit', 3: 'w-fb-hinge-press', 4: 'w-cardio-steady', 5: 'w-fb-clean-carry', 6: 'w-fb-metcon', 0: null },
+    },
+    {
+      id: 'wk-fullbody-short', name: 'Full Body · 30 min', focus: 'Short full body days for a busy week',
+      days: { 1: 'w-express-full', 2: 'w-cardio-intervals', 3: 'w-fb-express-b', 4: null, 5: 'w-fb-dumbbell', 6: 'w-cardio-steady', 0: null },
+    },
+  ],
+};
+
+const SEED_PACKS = [PACK_2026_09, PACK_2026_09B, PACK_2026_09C];
