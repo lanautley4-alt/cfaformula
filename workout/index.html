@@ -130,6 +130,17 @@
   </section>
 
   <section class="card">
+    <div class="card-head"><h2>Restore point</h2></div>
+    <p class="subtle" id="restoreInfo"></p>
+    <p class="subtle">A copy of everything is set aside automatically before each app update, so a new version can never cost you progress.</p>
+    <div class="btn-row">
+      <button class="btn-outline" onclick="saveRestorePoint()">Save one now</button>
+      <button class="btn-outline" onclick="restoreSnapshot()">Restore</button>
+      <button class="btn-outline hidden" id="undoRestoreBtn" onclick="undoRestore()">Undo restore</button>
+    </div>
+  </section>
+
+  <section class="card">
     <div class="card-head"><h2>Program</h2></div>
     <p class="subtle">Reset rebuilds the library: the default Week A / Week B plan plus the shipped workouts (back safe, glutes &amp; legs, 30 minute, cardio). Anything you made yourself is lost. Your logged history is kept.</p>
     <div class="btn-row">
@@ -414,7 +425,7 @@
 <script src="js/packs.js?v=2"></script>
 <script src="js/progression.js?v=3"></script>
 <script src="js/library.js?v=3"></script>
-<script src="js/app.js?v=10"></script>
+<script src="js/app.js?v=11"></script>
 <script>
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 </script>
