@@ -334,4 +334,257 @@ const PACK_2026_09 = {
   ],
 };
 
-const SEED_PACKS = [PACK_2026_09];
+// ── Pack 2: power & tempo, volume & sweat ────────────────────
+// Two more full weeks of training so the rotation can run a month
+// without repeating a session. Same shape as the originals: a main
+// barbell lift first, three lower-body days, one conditioning day,
+// pulling twice, core every session, no arm isolation, 45-50 min.
+const PACK_2026_09B = {
+  id: 'pack-2026-09b',
+  rotate: true, // these two join the automatic rotation, so the variety happens on its own
+
+  workouts: [
+    // ── Power & tempo ────────────────────────────────────────
+    {
+      id: 'w-pause-squat', name: 'Pause Squat + Legs', minutes: 50,
+      focus: 'Tempo Squat · Single Leg · Quads · Core',
+      blocks: [
+        pkW('ps-wu', 'Warm-up', WU_LEGS),
+        pkB('ps-a', 'superset', 'Pause Squat + Lateral Lunge', 4, 120, [
+          pkX('pause-squat', 4, 5, '7-8', 75), pkX('lateral-lunge', 4, 10, '6-7', 20),
+        ], '3-second pause at the bottom of every squat. Stay tight, drive up fast.'),
+        pkB('ps-b', 'superset', 'Split Squat + Extension', 3, 90, [
+          pkX('bulgarian-split', 3, 10, '7-8', 25), pkX('leg-extension', 3, 15, '7-8', 50),
+        ]),
+        pkB('ps-c', 'superset', 'Machine + Calf', 3, 60, [
+          pkX('hack-squat', 3, 12, '7-8', 90), pkX('standing-calf', 3, 15, '6-7', 70),
+        ]),
+        pkB('ps-d', 'circuit', 'Core Finisher', 2, 45, [
+          pkX('hanging-leg', 2, 10), pkX('copenhagen-plank', 2, 20),
+        ]),
+      ],
+    },
+    {
+      id: 'w-power-clean', name: 'Power Clean + Back', minutes: 50,
+      focus: 'Power · Lats · Upper Back · Core',
+      blocks: [
+        pkW('pc-wu', 'Warm-up', [
+          { text: 'Jump Rope (easy pace)', amount: '1:00' },
+          { text: 'Cat-Cow', amount: '10' },
+          { text: 'Band Pull-Aparts', amount: '15' },
+          { text: 'Empty bar clean pulls', amount: '8' },
+          { text: 'Empty bar power cleans (slow)', amount: '6' },
+          { text: 'Build up over 2-3 warm-up sets', amount: '' },
+        ]),
+        pkB('pc-a', 'superset', 'Power Clean + Arch', 5, 90, [
+          pkX('power-clean', 5, 3, '7', 65), pkX('arch-hold', 5, 20),
+        ], 'Explosive triples — end the set the moment the bar slows down.'),
+        pkB('pc-b', 'superset', 'Pull-Up + Row', 3, 75, [
+          pkX('pull-up', 3, 6, '8'), pkX('meadows-row', 3, 10, '7-8', 45),
+        ]),
+        pkB('pc-c', 'superset', 'Lats + Rear Delt', 3, 60, [
+          pkX('machine-pullover', 3, 12, '7-8', 55), pkX('face-pull', 3, 15, '6-7', 25),
+        ]),
+        pkB('pc-d', 'circuit', 'Core Finisher', 2, 45, [
+          pkX('windshield-wiper', 2, 8), pkX('dead-bug', 2, 12),
+        ]),
+      ],
+    },
+    {
+      id: 'w-grit-cardio', name: 'Grit Conditioning', minutes: 45,
+      focus: 'Sled · Ropes · Full Body Sweat · Abs',
+      blocks: [
+        pkW('gc-wu', 'Warm-up', WU_QUICK),
+        pkB('gc-a', 'circuit', 'Grit Circuit', 4, 75, [
+          pkX('sled-push', 4, 30, '7-8', 90), pkX('devils-press', 4, 8, '7', 20),
+          pkX('battle-ropes', 4, 30),
+        ], 'Hard but steady. No rest inside a round, 75s between rounds.'),
+        pkB('gc-b', 'circuit', 'Ab Circuit', 3, 45, [
+          pkX('decline-situp', 3, 15), pkX('russian-twist', 3, 20), pkX('l-sit', 3, 15),
+        ]),
+        pkB('gc-c', 'circuit', 'Rope Finisher', 1, 0, [pkX('jump-rope', 1, 180)],
+          'One steady push to finish — pick a pace and hold it.'),
+      ],
+    },
+    {
+      id: 'w-trapbar-glutes', name: 'Trap Bar + Glutes', minutes: 50,
+      focus: 'Hinge · Glutes · Hamstrings · Calves',
+      blocks: [
+        pkW('tg-wu', 'Warm-up', [
+          { text: '90/90 Hip Switches', amount: '10' },
+          { text: 'Glute Bridge Hold', amount: ':30' },
+          { text: 'Single Leg Glute Bridges', amount: '10/side' },
+          { text: 'Bodyweight Good Mornings', amount: '12' },
+          { text: 'Light trap bar pulls', amount: '8' },
+          { text: 'Work up over 2-3 warm-up sets', amount: '' },
+        ]),
+        pkB('tg-a', 'superset', 'Trap Bar + Frog Pump', 4, 120, [
+          pkX('trap-bar-deadlift', 4, 6, '7-8', 155), pkX('frog-pump', 4, 20),
+        ]),
+        pkB('tg-b', 'superset', 'Glute Bridge + Curl', 3, 75, [
+          pkX('kas-glute-bridge', 3, 12, '7-8', 95), pkX('nordic-curl', 3, 6, '8'),
+        ]),
+        pkB('tg-c', 'superset', 'RDL + Calf', 3, 60, [
+          pkX('smith-rdl', 3, 10, '7-8', 85), pkX('seated-calf', 3, 15, '6-7', 45),
+        ]),
+        pkB('tg-d', 'circuit', 'Core Finisher', 2, 45, [
+          pkX('ab-wheel', 2, 12), pkX('pallof-press', 2, 10, '6-7', 20),
+        ]),
+      ],
+    },
+    {
+      id: 'w-thruster-lats', name: 'Thruster + Lats', minutes: 48,
+      focus: 'Full Body Power · Lats · Carries · Abs',
+      blocks: [
+        pkW('tl-wu', 'Warm-up', [
+          { text: 'Wrist circles & front-rack stretch', amount: ':45' },
+          { text: 'Band Pull-Aparts', amount: '15' },
+          { text: 'Band Overhead Press', amount: '12' },
+          { text: 'Empty bar thrusters', amount: '10' },
+          { text: 'Hollow Body practice', amount: ':20 ×2' },
+          { text: 'Work up over 2 warm-up sets', amount: '' },
+        ]),
+        pkB('tl-a', 'superset', 'Thruster + Hollow', 5, 90, [
+          pkX('thruster', 5, 5, '7-8', 55), pkX('hollow-hold', 5, 20),
+        ], 'Legs drive the bar — one smooth movement from squat to lockout.'),
+        pkB('tl-b', 'superset', 'Lats + Carry', 3, 60, [
+          pkX('neutral-pulldown', 3, 10, '7-8', 70), pkX('overhead-carry', 3, 30, '6-7', 25),
+        ]),
+        pkB('tl-c', 'circuit', 'Skill Circuit', 2, 60, [
+          pkX('wall-walk', 2, 3), pkX('crow-pose', 2, 20),
+        ], 'Quick skill touch-up — stop while it still looks good.'),
+        pkB('tl-d', 'circuit', 'Ab Circuit', 2, 45, [
+          pkX('v-up', 2, 12), pkX('plank-taps', 2, 20),
+        ]),
+      ],
+    },
+
+    // ── Volume & sweat ───────────────────────────────────────
+    {
+      id: 'w-squat-volume', name: 'Squat Volume + Legs', minutes: 50,
+      focus: 'High-Rep Squat · Glutes · Quads · Core',
+      blocks: [
+        pkW('sv-wu', 'Warm-up', WU_LEGS),
+        pkB('sv-a', 'superset', 'Squat Volume + Jumps', 4, 90, [
+          pkX('back-squat', 4, 10, '7', 85), pkX('box-jump', 4, 6),
+        ], 'Lighter than your heavy weeks — chase the burn, not the number.'),
+        pkB('sv-b', 'superset', 'Step-Up + Curtsy', 3, 60, [
+          pkX('step-up', 3, 12, '7', 20), pkX('curtsy-lunge', 3, 12, '7', 20),
+        ]),
+        pkB('sv-c', 'superset', 'Press + Calf', 3, 60, [
+          pkX('leg-press', 3, 20, '7-8', 100), pkX('single-leg-calf', 3, 15, '6-7'),
+        ]),
+        pkB('sv-d', 'circuit', 'Core Finisher', 2, 45, [
+          pkX('ab-wheel', 2, 12), pkX('hanging-knee', 2, 15),
+        ]),
+      ],
+    },
+    {
+      id: 'w-snatch-pull', name: 'Snatch-Grip Pull + Back', minutes: 50,
+      focus: 'Hinge · Lats · Upper Back · Core',
+      blocks: [
+        pkW('sp-wu', 'Warm-up', [
+          { text: 'Cat-Cow', amount: '10' },
+          { text: 'Band Pull-Aparts', amount: '15' },
+          { text: 'Scapula Pull-Ups (dead hang shrugs)', amount: '8' },
+          { text: 'Bodyweight Good Mornings', amount: '12' },
+          { text: 'Light snatch-grip pulls (empty bar)', amount: '8' },
+          { text: 'Work up over 2-3 warm-up sets', amount: '' },
+        ]),
+        pkB('sp-a', 'superset', 'Snatch-Grip DL + Hollow', 4, 120, [
+          pkX('snatch-grip-dl', 4, 6, '7-8', 115), pkX('hollow-rocks', 4, 12),
+        ], 'Wide grip, long pull — this one builds the whole back.'),
+        pkB('sp-b', 'superset', 'Chin-Up + Kroc Row', 3, 75, [
+          pkX('chin-up', 3, 6, '8'), pkX('kroc-row', 3, 15, '7-8', 40),
+        ]),
+        pkB('sp-c', 'superset', 'Row + Rear Delt', 3, 60, [
+          pkX('wide-cable-row', 3, 12, '7-8', 65), pkX('rear-delt-fly', 3, 15, '6-7', 25),
+        ]),
+        pkB('sp-d', 'circuit', 'Core Finisher', 2, 45, [
+          pkX('side-plank', 2, 35), pkX('pallof-press', 2, 12, '6-7', 20),
+        ]),
+      ],
+    },
+    {
+      id: 'w-engine-core', name: 'Engine + Core', minutes: 45,
+      focus: 'Intervals · Full Body Cardio · Abs',
+      blocks: [
+        pkW('ec-wu', 'Warm-up', WU_QUICK),
+        pkB('ec-a', 'circuit', 'Interval Circuit', 4, 60, [
+          pkX('ski-erg', 4, 12, '7-8'), pkX('db-snatch', 4, 10, '7', 25), pkX('burpee', 4, 10),
+        ], 'Push the erg, recover on the bodyweight moves. 60s between rounds.'),
+        pkB('ec-b', 'circuit', 'Ab Circuit', 3, 45, [
+          pkX('weighted-plank', 3, 30, '', 10), pkX('reverse-crunch', 3, 15),
+          pkX('bicycle-crunch', 3, 20),
+        ]),
+        pkB('ec-c', 'circuit', 'Cool Down', 1, 0, [pkX('incline-walk', 1, 300)],
+          'Steady incline walk to bring the heart rate down.'),
+      ],
+    },
+    {
+      id: 'w-thrust-hams', name: 'Hip Thrust + Hamstrings', minutes: 50,
+      focus: 'Glutes · Hamstrings · Adductors · Core',
+      blocks: [
+        pkW('th-wu', 'Warm-up', [
+          { text: '90/90 Hip Switches', amount: '10' },
+          { text: 'Glute Bridge Hold', amount: ':30' },
+          { text: 'Frog Pumps', amount: '20' },
+          { text: 'Bodyweight Good Mornings', amount: '12' },
+          { text: 'Light hip thrusts (empty bar)', amount: '12' },
+          { text: 'Work up over 2 warm-up sets', amount: '' },
+        ]),
+        pkB('th-a', 'superset', 'Hip Thrust + Bridge', 4, 90, [
+          pkX('hip-thrust', 4, 8, '8', 155), pkX('glute-bridge', 4, 20),
+        ], 'Pause and squeeze for a full second at the top of every rep.'),
+        pkB('th-b', 'superset', 'Single-Leg RDL + Curl', 3, 75, [
+          pkX('single-leg-rdl', 3, 10, '7-8', 25), pkX('seated-leg-curl', 3, 15, '7-8', 55),
+        ]),
+        pkB('th-c', 'superset', 'Posterior + Adductor', 3, 60, [
+          pkX('reverse-hyper', 3, 15, '6-7', 45), pkX('adduction-machine', 3, 15, '6-7', 50),
+        ]),
+        pkB('th-d', 'circuit', 'Core Finisher', 2, 45, [
+          pkX('body-saw', 2, 12), pkX('copenhagen-plank', 2, 20),
+        ]),
+      ],
+    },
+    {
+      id: 'w-pushpress-lats', name: 'Push Press + Lats', minutes: 48,
+      focus: 'Overhead · Lats · Carries · Abs',
+      blocks: [
+        pkW('pl-wu', 'Warm-up', [
+          { text: 'Wrist circles & stretches', amount: ':45' },
+          { text: 'Band Pull-Aparts', amount: '15' },
+          { text: 'Band Overhead Press', amount: '12' },
+          { text: 'Empty Bar Push Press', amount: '10' },
+          { text: 'Hollow Body practice', amount: ':20 ×2' },
+          { text: 'Work up over 2 warm-up sets', amount: '' },
+        ]),
+        pkB('pl-a', 'superset', 'Push Press + Arch', 5, 90, [
+          pkX('push-press', 5, 5, '7-8', 60), pkX('arch-hold', 5, 20),
+        ]),
+        pkB('pl-b', 'superset', 'Landmine + Pulldown', 3, 60, [
+          pkX('landmine-press', 3, 10, '7-8', 35), pkX('lat-pulldown', 3, 12, '7-8', 70),
+        ]),
+        pkB('pl-c', 'superset', 'Row + Carry', 3, 60, [
+          pkX('db-row', 3, 12, '7-8', 35), pkX('sandbag-carry', 3, 40, '6-7', 50),
+        ]),
+        pkB('pl-d', 'circuit', 'Ab Circuit', 2, 45, [
+          pkX('mountain-climber', 2, 30), pkX('dragon-flag-neg', 2, 8),
+        ]),
+      ],
+    },
+  ],
+
+  weeks: [
+    {
+      id: 'wk-power', name: 'Power & Tempo · 50 min', focus: 'Pause squats, power cleans, trap bar pulls — heavier and slower',
+      days: { 1: 'w-pause-squat', 2: 'w-power-clean', 3: 'w-grit-cardio', 4: 'w-trapbar-glutes', 5: 'w-thruster-lats', 6: null, 0: null },
+    },
+    {
+      id: 'wk-volume', name: 'Volume & Sweat · 50 min', focus: 'Higher reps, shorter rest — the pump week between heavy blocks',
+      days: { 1: 'w-squat-volume', 2: 'w-snatch-pull', 3: 'w-engine-core', 4: 'w-thrust-hams', 5: 'w-pushpress-lats', 6: null, 0: null },
+    },
+  ],
+};
+
+const SEED_PACKS = [PACK_2026_09, PACK_2026_09B];

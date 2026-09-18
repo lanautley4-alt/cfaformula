@@ -54,8 +54,13 @@ function applySeedPacks() {
     if (plan.seeded.includes(pack.id)) continue;
     for (const w of pack.workouts)
       if (!library.workouts.some(x => x.id === w.id)) library.workouts.push(structuredClone(w));
-    for (const wk of pack.weeks)
+    plan.rotation = plan.rotation || [];
+    for (const wk of pack.weeks) {
       if (!library.weeks.some(x => x.id === wk.id)) library.weeks.push(structuredClone(wk));
+      // packs marked `rotate` join the automatic rotation; the rest wait
+      // to be assigned by hand
+      if (pack.rotate && !plan.rotation.includes(wk.id)) plan.rotation.push(wk.id);
+    }
     plan.seeded.push(pack.id);
     changed = true;
   }
