@@ -1,14 +1,14 @@
 /* Service worker — cache-first so the app works offline at the gym */
-const CACHE = 'lift-v14';
+const CACHE = 'lift-v15';
 const ASSETS = [
   './',
   'index.html',
-  'style.css?v=7',
+  'style.css?v=8',
   'js/data.js?v=4',
   'js/progression.js?v=3',
-  'js/packs.js?v=3',
+  'js/packs.js?v=4',
   'js/library.js?v=3',
-  'js/app.js?v=11',
+  'js/app.js?v=12',
   'manifest.webmanifest',
   'icons/icon-180.png',
   'icons/icon-192.png',
