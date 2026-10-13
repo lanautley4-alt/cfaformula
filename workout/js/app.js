@@ -22,7 +22,7 @@ function lsSet(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
 // Before an app update is allowed to touch stored data, the current
 // state is copied aside. Settings can put it back with one tap, so an
 // update can never be the reason progress is lost.
-const APP_VERSION = '2026.09.18';
+const APP_VERSION = '2026.10.13';
 const K_SNAPSHOT  = 'wt_restore_point';
 const K_UNDO      = 'wt_restore_undo';
 const DATA_KEYS = [K_SETTINGS, K_PROGRAM, K_LIBRARY, K_PLAN, K_DAYS, K_LOGS, K_CUSTOM, K_UNITS];
@@ -1300,6 +1300,9 @@ function renderSettings() {
   document.getElementById('setAutoProgress').checked = !!settings.autoProgress;
   document.getElementById('setUnits').value = settings.units || 'lbs';
   renderRestorePoint();
+  const v = document.getElementById('aboutVersion');
+  if (v) v.innerHTML = `Version <strong>${APP_VERSION}</strong> — ${library.workouts.length} workouts,
+    ${library.weeks.length} week templates in your library.`;
 }
 
 // ── Restore point ─────────────────────────────────────────────
