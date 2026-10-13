@@ -112,6 +112,7 @@ html, body { overflow-x: hidden; }
 }
 .block-chip.warmup { background: rgba(234, 179, 8, 0.12); color: var(--yellow); }
 .block-chip.circuit { background: rgba(255, 255, 255, 0.08); color: var(--text); }
+.block-chip.straight { background: rgba(34, 197, 94, 0.12); color: var(--green); }
 .block-head h3 { flex: 1; font-size: 14.5px; font-weight: 700; }
 .block-meta { color: var(--muted); font-size: 12px; }
 .link-btn { background: none; border: none; color: var(--muted); font-size: 12px; cursor: pointer; padding: 4px; }
@@ -234,6 +235,7 @@ html, body { overflow-x: hidden; }
 }
 .wd-kind.warmup { background: rgba(234,179,8,0.12); color: var(--yellow); }
 .wd-kind.circuit { background: rgba(255,255,255,0.08); color: var(--text); }
+.wd-kind.straight { background: rgba(34,197,94,0.12); color: var(--green); }
 .wd-name { flex: 1; font-size: 12.5px; font-weight: 600; }
 .wd-meta { font-size: 11px; color: var(--muted); }
 .wd-ex {

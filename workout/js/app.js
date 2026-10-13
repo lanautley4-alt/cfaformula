@@ -415,6 +415,14 @@ function renderSchedule() {
     : day.blocks.map(b => renderBlock(dateStr, b, log)).join('');
 }
 
+// Label for a block's kind. 'straight' is a single exercise done on its
+// own, set after set, rather than alternated with something else.
+function blockChip(type) {
+  return type === 'circuit' ? 'CIRCUIT'
+       : type === 'straight' ? 'STRAIGHT SETS'
+       : 'SUPERSET';
+}
+
 function renderBlock(dateStr, block, log) {
   const skipped = (log.skipped || []).includes(block.id);
 
@@ -436,14 +444,15 @@ function renderBlock(dateStr, block, log) {
     </div>`;
   }
 
-  const chip = block.type === 'circuit' ? 'CIRCUIT' : 'SUPERSET';
-  const meta = `${block.rounds} rounds, ${block.rest}s rest`;
+  const chip = blockChip(block.type);
   const items = skipped ? '' : block.items.map((item, i) => renderExercise(dateStr, block, i, log)).join('');
+  // one exercise on its own counts sets, not rounds
+  const unit = block.type === 'straight' ? 'set' : 'round';
 
   const rounds = skipped ? '' : `
     <div class="rounds-ctl">
       <button onclick="bumpRounds('${dateStr}','${block.id}',-1)" ${block.rounds <= 1 ? 'disabled' : ''}>−</button>
-      <span>${block.rounds} round${block.rounds === 1 ? '' : 's'}</span>
+      <span>${block.rounds} ${unit}${block.rounds === 1 ? '' : 's'}</span>
       <button onclick="bumpRounds('${dateStr}','${block.id}',1)">＋</button>
       <span class="spacer"></span>
       <span class="subtle">${block.rest}s rest</span>
@@ -1051,7 +1060,7 @@ function workoutDetailHtml(w) {
       return `<div class="wd-ex"><span>${esc(ex ? ex.name : 'Removed exercise')}</span>
         <span class="wd-rx">${it.sets}×${it.reps}${unit && unit !== 'rep' ? unit : ''}</span></div>`;
     }).join('');
-    return `<div class="wd-block"><span class="wd-kind ${b.type}">${b.type === 'circuit' ? 'CIRCUIT' : 'SUPERSET'}</span>
+    return `<div class="wd-block"><span class="wd-kind ${b.type}">${blockChip(b.type)}</span>
       <span class="wd-name">${esc(b.name)}</span>
       <span class="wd-meta">${b.rounds} rounds</span></div>${items}`;
   }).join('');

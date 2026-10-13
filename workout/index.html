@@ -14,7 +14,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-180.png" />
   <link rel="icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="style.css?v=7" />
+  <link rel="stylesheet" href="style.css?v=8" />
 </head>
 <body>
 
@@ -278,7 +278,7 @@
     <input id="newBlockName" type="text" placeholder="e.g. Glute Burnout" />
     <div class="grid-3">
       <div><label>Type</label>
-        <select id="newBlockType"><option value="superset">Superset</option><option value="circuit">Circuit</option></select>
+        <select id="newBlockType"><option value="straight">Straight sets</option><option value="superset">Superset</option><option value="circuit">Circuit</option></select>
       </div>
       <div><label>Rounds</label><input id="newBlockRounds" type="number" value="3" min="1" max="10" /></div>
       <div><label>Rest (s)</label><input id="newBlockRest" type="number" value="60" min="0" max="300" step="15" /></div>
@@ -422,10 +422,10 @@
 </div>
 
 <script src="js/data.js?v=4"></script>
-<script src="js/packs.js?v=3"></script>
+<script src="js/packs.js?v=4"></script>
 <script src="js/progression.js?v=3"></script>
 <script src="js/library.js?v=3"></script>
-<script src="js/app.js?v=11"></script>
+<script src="js/app.js?v=12"></script>
 <script>
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 </script>

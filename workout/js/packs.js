@@ -752,4 +752,143 @@ const PACK_2026_09C = {
   ],
 };
 
-const SEED_PACKS = [PACK_2026_09, PACK_2026_09B, PACK_2026_09C];
+// ── Pack 4: more full body, straight sets ────────────────────
+// Built around the movements she reaches for — hip thrusts, lat
+// pulldowns, thrusters, straight-arm pulldowns, Smith machine — and
+// leaning on straight sets rather than pairing everything up.
+const PACK_2026_10 = {
+  id: 'pack-2026-10',
+
+  workouts: [
+    {
+      id: 'w-fb-thrust-thruster', name: 'Full Body · Thrusts & Thrusters', minutes: 50,
+      focus: 'Hip Thrust · Thrusters · Lat Pulldown',
+      blocks: [
+        pkW('ftt-wu', 'Warm-up', [
+          { text: '90/90 Hip Switches', amount: '10' },
+          { text: 'Glute Bridge Hold', amount: ':30' },
+          { text: 'Band Pull-Aparts', amount: '15' },
+          { text: 'Air Squats', amount: '10' },
+          { text: 'Empty bar thrusters', amount: '8' },
+          { text: 'Work up over 2 warm-up sets', amount: '' },
+        ]),
+        pkB('ftt-a', 'straight', 'Hip Thrust', 4, 90, [
+          pkX('hip-thrust', 4, 8, '8', 155),
+        ], 'On its own. Pause and squeeze a full second at the top.'),
+        pkB('ftt-b', 'straight', 'Thrusters', 4, 90, [
+          pkX('thruster', 4, 8, '7-8', 45),
+        ], 'Squat and press as one movement — the legs do the work.'),
+        pkB('ftt-c', 'superset', 'Lat Pulldown + Straight-Arm', 3, 60, [
+          pkX('lat-pulldown', 3, 10, '7-8', 70), pkX('straight-arm-pd', 3, 12, '6-7', 30),
+        ], 'Pulldown first, then straight-arm to finish the lats off.'),
+        pkB('ftt-d', 'circuit', 'Core Finisher', 2, 45, [
+          pkX('hanging-knee', 2, 12), pkX('pallof-press', 2, 10, '6-7', 20),
+        ]),
+      ],
+    },
+    {
+      id: 'w-fb-smith', name: 'Full Body · Smith Machine', minutes: 48,
+      focus: 'Smith Squat · Smith RDL · Hip Thrust · Lats',
+      blocks: [
+        pkW('fsm-wu', 'Warm-up', WU_LEGS),
+        pkB('fsm-a', 'straight', 'Smith Machine Squat', 4, 90, [
+          pkX('smith-squat', 4, 8, '7-8', 95),
+        ], 'Bar path is fixed, so you can push close to failure safely.'),
+        pkB('fsm-b', 'straight', 'Smith Machine RDL', 3, 90, [
+          pkX('smith-rdl', 3, 10, '7-8', 85),
+        ]),
+        pkB('fsm-c', 'superset', 'Smith Hip Thrust + Pulldown', 3, 75, [
+          pkX('smith-hip-thrust', 3, 10, '7-8', 115), pkX('lat-pulldown', 3, 12, '7-8', 70),
+        ]),
+        pkB('fsm-d', 'circuit', 'Core Finisher', 2, 45, [
+          pkX('ab-wheel', 2, 12), pkX('side-plank', 2, 30),
+        ]),
+      ],
+    },
+    {
+      id: 'w-fb-machines', name: 'Full Body · Machines & Cables', minutes: 45,
+      focus: 'Leg Press · Cables · Straight-Arm Pulldown',
+      blocks: [
+        pkW('fmc-wu', 'Warm-up', WU_QUICK),
+        pkB('fmc-a', 'straight', 'Leg Press', 4, 75, [
+          pkX('leg-press', 4, 12, '7-8', 115),
+        ], 'Feet high and wide for more glute, lower and closer for quads.'),
+        pkB('fmc-b', 'superset', 'Pulldown + Straight-Arm', 3, 60, [
+          pkX('lat-pulldown', 3, 10, '7-8', 70), pkX('straight-arm-pd', 3, 12, '6-7', 30),
+        ]),
+        pkB('fmc-c', 'superset', 'Row + Pull-Through', 3, 60, [
+          pkX('cable-row', 3, 12, '7-8', 70), pkX('cable-pullthrough', 3, 15, '6-7', 40),
+        ]),
+        pkB('fmc-d', 'circuit', 'Core Finisher', 3, 45, [
+          pkX('cable-crunch', 3, 15, '6-7', 40), pkX('hanging-knee', 3, 12),
+        ]),
+      ],
+    },
+    {
+      id: 'w-fb-straight', name: 'Full Body · Straight Sets', minutes: 50,
+      focus: 'No supersets · Squat · Thrust · Pull · Press',
+      blocks: [
+        pkW('fst-wu', 'Warm-up', WU_LEGS),
+        pkB('fst-a', 'straight', 'Back Squat', 4, 120, [
+          pkX('back-squat', 4, 6, '7-8', 95),
+        ], 'Nothing is paired today — take your time and lift heavy.'),
+        pkB('fst-b', 'straight', 'Hip Thrust', 3, 90, [
+          pkX('hip-thrust', 3, 10, '8', 155),
+        ]),
+        pkB('fst-c', 'straight', 'Lat Pulldown', 3, 75, [
+          pkX('lat-pulldown', 3, 10, '7-8', 70),
+        ]),
+        pkB('fst-d', 'straight', 'Push Press', 3, 90, [
+          pkX('push-press', 3, 6, '7-8', 55),
+        ]),
+        pkB('fst-e', 'circuit', 'Core Finisher', 2, 45, [
+          pkX('dead-bug', 2, 12), pkX('plank', 2, 45),
+        ]),
+      ],
+    },
+    {
+      id: 'w-fb-glutes-lats', name: 'Full Body · Glutes & Lats', minutes: 48,
+      focus: 'Hip Thrust · Smith Split Squat · Lats · Core',
+      blocks: [
+        pkW('fgl-wu', 'Warm-up', WU_LEGS),
+        pkB('fgl-a', 'straight', 'Hip Thrust', 4, 90, [
+          pkX('hip-thrust', 4, 10, '8', 155),
+        ]),
+        pkB('fgl-b', 'superset', 'Split Squats', 3, 90, [
+          pkX('smith-split-l', 3, 10, '7-8', 30), pkX('smith-split-r', 3, 10, '7-8', 30),
+        ], 'Left leg, then right leg — that is one round.'),
+        pkB('fgl-c', 'superset', 'Lats + Kickback', 3, 60, [
+          pkX('straight-arm-pd', 3, 12, '7-8', 30), pkX('cable-kickback', 3, 15, '6-7', 20),
+        ]),
+        pkB('fgl-d', 'circuit', 'Core Finisher', 2, 45, [
+          pkX('reverse-crunch', 2, 15), pkX('copenhagen-plank', 2, 20),
+        ]),
+      ],
+    },
+    {
+      id: 'w-fb-thruster-swing', name: 'Full Body · Thrusters & Swings', minutes: 42,
+      focus: 'Fast session · Thrusters · Swings · Pulldown',
+      blocks: [
+        pkW('fts-wu', 'Warm-up', WU_QUICK),
+        pkB('fts-a', 'straight', 'Thrusters', 5, 90, [
+          pkX('thruster', 5, 6, '7-8', 55),
+        ], 'Heavier than the circuit version — these are working sets.'),
+        pkB('fts-b', 'superset', 'Pulldown + Swing', 4, 60, [
+          pkX('lat-pulldown', 4, 10, '7-8', 70), pkX('kb-swing', 4, 15, '6-7', 35),
+        ]),
+        pkB('fts-c', 'circuit', 'Finisher', 3, 45, [
+          pkX('mountain-climber', 3, 30), pkX('hollow-rocks', 3, 15),
+        ], 'No rest between exercises.'),
+      ],
+    },
+  ],
+
+  weeks: [
+    {
+      id: 'wk-fullbody-mixed', name: 'Full Body · Mixed', focus: 'Straight sets, machines and barbell across the week',
+      days: { 1: 'w-fb-straight', 2: 'w-cardio-circuit', 3: 'w-fb-thrust-thruster', 4: 'w-cardio-steady', 5: 'w-fb-smith', 6: 'w-fb-thruster-swing', 0: null },
+    },
+  ],
+};
+
+const SEED_PACKS = [PACK_2026_09, PACK_2026_09B, PACK_2026_09C, PACK_2026_10];
