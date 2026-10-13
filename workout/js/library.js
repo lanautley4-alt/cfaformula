@@ -27,8 +27,8 @@ function workoutUsage(id) {
 
 function workoutSummary(w) {
   const work = (w.blocks || []).filter(b => b.type !== 'warmup');
-  const sets = work.reduce((n, b) => n + b.items.reduce((m, i) => m + (i.sets || 0), 0), 0);
-  const exs = work.reduce((n, b) => n + b.items.length, 0);
+  const sets = work.reduce((n, b) => n + (b.items || []).reduce((m, i) => m + (i.sets || 0), 0), 0);
+  const exs = work.reduce((n, b) => n + (b.items || []).length, 0);
   return `${exs} exercise${exs === 1 ? '' : 's'} · ${sets} sets · ${work.length} block${work.length === 1 ? '' : 's'}`;
 }
 
@@ -513,8 +513,8 @@ function renderEditor() {
     const head = `
       <div class="ed-block-head">
         <select class="ed-type" onchange="edBlockField(${bi},'type',this.value)">
-          ${['warmup', 'superset', 'circuit'].map(t =>
-            `<option value="${t}" ${b.type === t ? 'selected' : ''}>${t.toUpperCase()}</option>`).join('')}
+          ${['warmup', 'straight', 'superset', 'circuit'].map(t =>
+            `<option value="${t}" ${b.type === t ? 'selected' : ''}>${t === 'straight' ? 'STRAIGHT SETS' : t.toUpperCase()}</option>`).join('')}
         </select>
         <input class="ed-name" value="${esc(b.name || '')}" placeholder="Block name"
                onchange="edBlockField(${bi},'name',this.value)" />

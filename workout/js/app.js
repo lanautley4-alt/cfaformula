@@ -82,6 +82,37 @@ if (!plan || !plan.rotation) {
   lsSet(K_PLAN, plan);
 }
 
+// ── Repair blocks with a mismatched type ───────────────────────────────
+// An earlier editor offered only WARMUP / SUPERSET / CIRCUIT, so a
+// straight-set block showed "WARMUP" and could be saved as one, leaving a
+// warm-up block holding exercises (or a training block holding none).
+// Put those back the way they were meant to be.
+function repairBlocks() {
+  let changed = false;
+  const fixWorkout = w => {
+    for (const b of (w && w.blocks) || []) {
+      const hasSteps = Array.isArray(b.steps) && b.steps.length;
+      const hasItems = Array.isArray(b.items) && b.items.length;
+      if (b.type === 'warmup' && hasItems && !hasSteps) {
+        b.type = b.items.length > 1 ? 'superset' : 'straight';
+        b.rounds = b.rounds || Math.max(...b.items.map(i => i.sets || 3));
+        b.rest = b.rest == null ? 60 : b.rest;
+        changed = true;
+      } else if (b.type !== 'warmup' && hasSteps && !hasItems) {
+        b.type = 'warmup';
+        changed = true;
+      } else if (b.type !== 'warmup' && !Array.isArray(b.items)) {
+        b.items = [];
+        changed = true;
+      }
+    }
+  };
+  (library.workouts || []).forEach(fixWorkout);
+  Object.values(days).forEach(fixWorkout);
+  if (changed) { saveLibrary(); saveDays(); }
+}
+repairBlocks();
+
 // ── Seed packs ──────────────────────────────────────────────────────────
 // Workouts that ship with an app update. Each pack lands once;
 // plan.seeded remembers which have arrived, so anything deleted
@@ -348,7 +379,7 @@ function dayCompletion(dateStr) {
   let total = 0, done = 0;
   for (const block of day.blocks) {
     if (block.type === 'warmup' || (log.skipped || []).includes(block.id)) continue;
-    block.items.forEach((item, i) => {
+    (block.items || []).forEach((item, i) => {
       total += item.sets;
       const sets = (log.sets || {})[setKey(block.id, i)] || [];
       done += sets.filter(s => s && s.done).length;
@@ -428,7 +459,7 @@ function renderBlock(dateStr, block, log) {
 
   if (block.type === 'warmup') {
     const done = (log.warmup || {})[block.id] || [];
-    const steps = block.steps.map((s, i) => `
+    const steps = (block.steps || []).map((s, i) => `
       <div class="wu-step ${done.includes(i) ? 'done' : ''}" onclick="toggleWarmup('${dateStr}','${block.id}',${i})">
         <span class="n">${done.includes(i) ? '✓' : i + 1}</span>
         <span class="t">${esc(s.text)}</span>
@@ -438,14 +469,14 @@ function renderBlock(dateStr, block, log) {
       <div class="block-head">
         <span class="block-chip warmup">WARM-UP</span>
         <h3>${esc(block.name)}</h3>
-        <span class="block-meta">${block.steps.length} steps</span>
+        <span class="block-meta">${(block.steps || []).length} steps</span>
       </div>
       <div style="margin-top:8px">${steps}</div>
     </div>`;
   }
 
   const chip = blockChip(block.type);
-  const items = skipped ? '' : block.items.map((item, i) => renderExercise(dateStr, block, i, log)).join('');
+  const items = skipped ? '' : (block.items || []).map((item, i) => renderExercise(dateStr, block, i, log)).join('');
   // one exercise on its own counts sets, not rounds
   const unit = block.type === 'straight' ? 'set' : 'round';
 
@@ -565,7 +596,7 @@ function toggleSet(dateStr, blockId, itemIdx, setIdx) {
     if (ex) stampLog(log, key, ex.id, item.reps);
     // rest is between rounds — only start the timer once every exercise
     // in the block has this round's set checked off
-    const roundDone = block.items.every((it, i) => {
+    const roundDone = (block.items || []).every((it, i) => {
       if (setIdx >= it.sets) return true;
       const ss = log.sets[setKey(blockId, i)] || [];
       return ss[setIdx] && ss[setIdx].done;
@@ -640,7 +671,7 @@ function completeRemaining(dateStr, log) {
   const day = dayFor(new Date(dateStr + 'T12:00'));
   for (const block of day.blocks) {
     if (block.type === 'warmup' || (log.skipped || []).includes(block.id)) continue;
-    block.items.forEach((item, i) => {
+    (block.items || []).forEach((item, i) => {
       const key = setKey(block.id, i);
       const sets = ensureSets(log, key, item.sets);
       const sug = suggestionFor(dateStr, block, i);
@@ -928,7 +959,7 @@ function confirmAddExercise() {
   closeSheets();
   editDay(dateStr, 'Add ' + (exById(exId) || {}).name, w => {
     const block = w.blocks.find(b => b.id === blockId);
-    if (block) block.items.push(structuredClone(item));
+    if (block) (block.items = block.items || []).push(structuredClone(item));
   });
 }
 
