@@ -175,6 +175,18 @@ const BUILTIN_EXERCISES = [
   { id: 'stair-climber',     name: 'Stair Climber',             pattern: 'conditioning', muscles: ['cardio', 'glutes'], equip: 'cardio', load: 'time', repUnit: 'sec' },
   { id: 'treadmill-run',     name: 'Treadmill Run',             pattern: 'conditioning', muscles: ['cardio'],    equip: 'cardio',    load: 'time', repUnit: 'sec' },
   { id: 'incline-walk',      name: 'Incline Treadmill Walk',    pattern: 'conditioning', muscles: ['cardio'],    equip: 'cardio',    load: 'time', repUnit: 'sec' },
+
+  // Treadmill intervals — logged as a speed (mph) held for a number of
+  // seconds, so both the pace and the time are tracked.
+  { id: 'tread-walk',        name: 'Tread · Recovery Walk',     pattern: 'conditioning', muscles: ['cardio'], equip: 'cardio', load: 'pace', repUnit: 'sec', inc: 0 },
+  { id: 'tread-jog',         name: 'Tread · Jog',               pattern: 'conditioning', muscles: ['cardio'], equip: 'cardio', load: 'pace', repUnit: 'sec', inc: 0.1 },
+  { id: 'tread-base',        name: 'Tread · Base Pace',         pattern: 'conditioning', muscles: ['cardio'], equip: 'cardio', load: 'pace', repUnit: 'sec', inc: 0.1 },
+  { id: 'tread-push',        name: 'Tread · Push Pace',         pattern: 'conditioning', muscles: ['cardio'], equip: 'cardio', load: 'pace', repUnit: 'sec', inc: 0.1 },
+  { id: 'tread-sprint',      name: 'Tread · Sprint',            pattern: 'conditioning', muscles: ['cardio'], equip: 'cardio', load: 'pace', repUnit: 'sec', inc: 0.1 },
+  { id: 'tread-all-out',     name: 'Tread · All-Out Sprint',    pattern: 'conditioning', muscles: ['cardio'], equip: 'cardio', load: 'pace', repUnit: 'sec', inc: 0.1 },
+  { id: 'tread-inc-walk',    name: 'Tread · Incline Walk',      pattern: 'conditioning', muscles: ['cardio', 'glutes'], equip: 'cardio', load: 'pace', repUnit: 'sec', inc: 0 },
+  { id: 'tread-inc-run',     name: 'Tread · Incline Run',       pattern: 'conditioning', muscles: ['cardio', 'glutes'], equip: 'cardio', load: 'pace', repUnit: 'sec', inc: 0.1 },
+  { id: 'tread-hill',        name: 'Tread · Hill Climb',        pattern: 'conditioning', muscles: ['cardio', 'glutes'], equip: 'cardio', load: 'pace', repUnit: 'sec', inc: 0 },
   { id: 'burpee',            name: 'Burpees',                   pattern: 'conditioning', muscles: ['cardio'],    equip: 'bodyweight', load: 'bw' },
   { id: 'devils-press',      name: "Devil's Press",             pattern: 'conditioning', muscles: ['cardio', 'shoulders', 'legs'], equip: 'dumbbell', load: 'weight', inc: 5 },
   { id: 'mountain-climber',  name: 'Mountain Climbers',         pattern: 'conditioning', muscles: ['cardio', 'core'], equip: 'bodyweight', load: 'bw' },

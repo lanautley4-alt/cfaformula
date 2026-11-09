@@ -891,4 +891,156 @@ const PACK_2026_10 = {
   ],
 };
 
-const SEED_PACKS = [PACK_2026_09, PACK_2026_09B, PACK_2026_09C, PACK_2026_10];
+// ── Pack 5: bootcamp (treadmill + floor) ─────────────────────
+// Barry's-style: the room splits into treadmill blocks and floor
+// blocks and you alternate. Every run is written out as a speed held
+// for a set time — the mph box is yours to set, these are a starting
+// point. Paces, roughly: walk 3.5, jog 4.5-5.5, base 6, push 7.5,
+// sprint 9+. Incline work runs slower on purpose.
+const WU_TREAD = [
+  { text: 'Walk, building to an easy jog', amount: '3:00' },
+  { text: 'Leg Swings + Arm Circles (off the belt)', amount: '10 each' },
+  { text: 'Air Squats', amount: '10' },
+  { text: 'Two 20s strides at base pace', amount: '2 ×:20' },
+];
+
+const PACK_2026_11 = {
+  id: 'pack-2026-11',
+
+  workouts: [
+    {
+      id: 'w-bc-legs', name: 'Bootcamp · Butt & Legs', minutes: 50,
+      focus: 'Tread intervals + glute and leg floor blocks',
+      blocks: [
+        pkW('bcl-wu', 'Warm-up', WU_TREAD),
+        pkB('bcl-t1', 'circuit', 'Tread 1 · Incline Builder', 3, 0, [
+          pkX('tread-inc-walk', 3, 60, '', 3.5),
+          pkX('tread-inc-run', 3, 45, '', 5.5),
+          pkX('tread-walk', 3, 45, '', 3.5),
+        ], 'Incline 6-8%. Walk 1:00, run :45, walk :45 — three times through, straight into the floor.'),
+        pkB('bcl-f1', 'superset', 'Floor 1 · Glutes', 3, 45, [
+          pkX('hip-thrust', 3, 12, '7-8', 135), pkX('walking-lunge', 3, 10, '6-7', 20),
+        ]),
+        pkB('bcl-t2', 'circuit', 'Tread 2 · Push & Sprint', 4, 0, [
+          pkX('tread-push', 4, 45, '', 7.5),
+          pkX('tread-sprint', 4, 20, '', 9.5),
+          pkX('tread-walk', 4, 40, '', 3.5),
+        ], 'Flat road. Push :45, sprint :20, walk :40 — four rounds.'),
+        pkB('bcl-f2', 'superset', 'Floor 2 · Legs', 3, 45, [
+          pkX('goblet-squat', 3, 15, '7-8', 45), pkX('bulgarian-split', 3, 10, '7-8', 20),
+        ]),
+        pkB('bcl-core', 'circuit', 'Core Finisher', 2, 30, [
+          pkX('bicycle-crunch', 2, 20), pkX('plank', 2, 45),
+        ]),
+      ],
+    },
+    {
+      id: 'w-bc-back', name: 'Bootcamp · Back & Abs', minutes: 50,
+      focus: 'Tread intervals + pulling and core floor blocks',
+      blocks: [
+        pkW('bcb-wu', 'Warm-up', WU_TREAD),
+        pkB('bcb-t1', 'circuit', 'Tread 1 · Base to Push', 3, 0, [
+          pkX('tread-base', 3, 90, '', 6),
+          pkX('tread-push', 3, 60, '', 7.5),
+          pkX('tread-walk', 3, 45, '', 3.5),
+        ], 'Base 1:30, push 1:00, walk :45 — three rounds.'),
+        pkB('bcb-f1', 'superset', 'Floor 1 · Pull', 3, 45, [
+          pkX('db-row', 3, 12, '7-8', 35), pkX('straight-arm-pd', 3, 12, '6-7', 30),
+        ]),
+        pkB('bcb-t2', 'circuit', 'Tread 2 · Sprint Ladder', 3, 0, [
+          pkX('tread-sprint', 3, 30, '', 9),
+          pkX('tread-walk', 3, 30, '', 3.5),
+          pkX('tread-all-out', 3, 15, '', 10),
+          pkX('tread-walk', 3, 45, '', 3.5),
+        ], 'Sprint :30, walk :30, all-out :15, walk :45. Three rounds — the :15 is a true all-out.'),
+        pkB('bcb-f2', 'superset', 'Floor 2 · Back', 3, 45, [
+          pkX('cs-row', 3, 12, '7-8', 60), pkX('face-pull', 3, 15, '6-7', 25),
+        ]),
+        pkB('bcb-core', 'circuit', 'Core Finisher', 3, 30, [
+          pkX('hanging-knee', 3, 12), pkX('side-plank', 3, 30), pkX('dead-bug', 3, 12),
+        ]),
+      ],
+    },
+    {
+      id: 'w-bc-total', name: 'Bootcamp · Total Body', minutes: 50,
+      focus: 'Tread intervals + full body floor blocks',
+      blocks: [
+        pkW('bct-wu', 'Warm-up', WU_TREAD),
+        pkB('bct-t1', 'circuit', 'Tread 1 · Steady Build', 2, 0, [
+          pkX('tread-jog', 2, 120, '', 5),
+          pkX('tread-base', 2, 90, '', 6),
+          pkX('tread-push', 2, 45, '', 7.5),
+          pkX('tread-walk', 2, 45, '', 3.5),
+        ], 'Jog 2:00, base 1:30, push :45, walk :45. Two rounds.'),
+        pkB('bct-f1', 'superset', 'Floor 1 · Squat & Press', 3, 45, [
+          pkX('db-thruster', 3, 12, '7', 20), pkX('db-rdl', 3, 12, '7-8', 35),
+        ]),
+        pkB('bct-t2', 'circuit', 'Tread 2 · Intervals', 5, 0, [
+          pkX('tread-push', 5, 30, '', 7.5),
+          pkX('tread-walk', 5, 30, '', 3.5),
+        ], 'Five rounds of :30 push, :30 walk. Keep the pace honest.'),
+        pkB('bct-f2', 'superset', 'Floor 2 · Pull & Swing', 3, 45, [
+          pkX('lat-pulldown', 3, 12, '7-8', 70), pkX('kb-swing', 3, 15, '6-7', 35),
+        ]),
+        pkB('bct-core', 'circuit', 'Core Finisher', 2, 30, [
+          pkX('mountain-climber', 2, 30), pkX('v-up', 2, 12),
+        ]),
+      ],
+    },
+    {
+      id: 'w-bc-run', name: 'Bootcamp · Run Club', minutes: 45,
+      focus: 'Mostly treadmill · long intervals and sprints',
+      blocks: [
+        pkW('bcr-wu', 'Warm-up', WU_TREAD),
+        pkB('bcr-t1', 'circuit', 'Tread 1 · Long Intervals', 3, 0, [
+          pkX('tread-base', 3, 180, '', 6),
+          pkX('tread-walk', 3, 60, '', 3.5),
+        ], 'Three minutes at base, one minute walking. Three rounds.'),
+        pkB('bcr-f1', 'circuit', 'Floor Break', 2, 45, [
+          pkX('walking-lunge', 2, 12, '6-7', 20), pkX('plank-taps', 2, 20),
+        ], 'A short break off the belt — keep moving.'),
+        pkB('bcr-t2', 'circuit', 'Tread 2 · Hills', 4, 0, [
+          pkX('tread-hill', 4, 60, '', 4),
+          pkX('tread-walk', 4, 60, '', 3.5),
+        ], 'Incline 10-12% at a strong walk or slow run, 1:00 on, 1:00 flat recovery.'),
+        pkB('bcr-t3', 'circuit', 'Tread 3 · Sprint Finish', 4, 0, [
+          pkX('tread-sprint', 4, 20, '', 9.5),
+          pkX('tread-walk', 4, 40, '', 3.5),
+        ], 'Four sprints, :20 on, :40 off. Empty the tank.'),
+        pkB('bcr-core', 'circuit', 'Core Finisher', 2, 30, [
+          pkX('hollow-rocks', 2, 15), pkX('russian-twist', 2, 20),
+        ]),
+      ],
+    },
+    {
+      id: 'w-bc-core', name: 'Bootcamp · Core & Sprint', minutes: 40,
+      focus: 'Short sprints + an abs-heavy floor',
+      blocks: [
+        pkW('bcc-wu', 'Warm-up', WU_TREAD),
+        pkB('bcc-t1', 'circuit', 'Tread 1 · Short Sprints', 6, 0, [
+          pkX('tread-sprint', 6, 20, '', 9.5),
+          pkX('tread-walk', 6, 40, '', 3.5),
+        ], 'Six rounds, :20 sprint and :40 walk. Step off the belt if you need the recovery.'),
+        pkB('bcc-f1', 'circuit', 'Floor 1 · Abs', 3, 40, [
+          pkX('ab-wheel', 3, 12), pkX('reverse-crunch', 3, 15), pkX('copenhagen-plank', 3, 20),
+        ]),
+        pkB('bcc-t2', 'circuit', 'Tread 2 · Incline Burn', 3, 0, [
+          pkX('tread-inc-walk', 3, 90, '', 3.5),
+          pkX('tread-walk', 3, 30, '', 3.5),
+        ], 'Incline 12-15%, 1:30 on, :30 flat. Three rounds.'),
+        pkB('bcc-f2', 'circuit', 'Floor 2 · Waist', 3, 40, [
+          pkX('pallof-press', 3, 12, '6-7', 20), pkX('side-plank', 3, 30), pkX('hollow-hold', 3, 25),
+        ]),
+      ],
+    },
+  ],
+
+  weeks: [
+    {
+      id: 'wk-bootcamp', name: 'Bootcamp · 50 min', focus: 'Tread and floor days through the week, with lifting between',
+      days: { 1: 'w-bc-legs', 2: 'w-fb-squat-pull', 3: 'w-bc-back', 4: 'w-bc-run', 5: 'w-fb-hinge-press', 6: 'w-bc-core', 0: null },
+    },
+  ],
+};
+
+const SEED_PACKS = [PACK_2026_09, PACK_2026_09B, PACK_2026_09C, PACK_2026_10, PACK_2026_11];

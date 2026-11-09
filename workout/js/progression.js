@@ -37,7 +37,8 @@ function suggestNext(exercise, history, programItem) {
                   doneSets.length < last.sets.length;
 
   // Bodyweight / timed: progress reps or seconds instead of load
-  if (exercise.load !== 'weight') {
+  const loaded = exercise.load === 'weight' || exercise.load === 'pace';
+  if (!loaded) {
     const lastBest = Math.max(...doneSets.map(s => Number(s.reps) || 0), 0);
     const unit = exercise.repUnit || 'rep';
     if (hitAll) {
@@ -47,10 +48,12 @@ function suggestNext(exercise, history, programItem) {
     return { weight: lastWeight, reps: Math.max(lastBest, targetReps), note: '' };
   }
 
-  const inc = exercise.inc || 5;
+  const inc = exercise.inc || (exercise.load === 'pace' ? 0.1 : 5);
 
   if (hitAll) {
-    const next = Math.max(0, roundToHalf(lastWeight + inc));
+    const next = Math.max(0, exercise.load === 'pace'
+      ? Math.round((lastWeight + inc) * 10) / 10
+      : roundToHalf(lastWeight + inc));
     const delta = typeof fmtWt === 'function' ? fmtWt(Math.abs(inc), exercise) : Math.abs(inc) + ' lbs';
     return { weight: next, reps: targetReps, note: `+${delta} — you earned it` };
   }
@@ -61,7 +64,8 @@ function suggestNext(exercise, history, programItem) {
     const prevMissed = prevDone.some(s => (Number(s.reps) || 0) < prevTarget - 2) ||
                        prevDone.length < prev.sets.length;
     if (prevMissed) {
-      const deload = Math.max(0, roundToFive(lastWeight * 0.9));
+      const deload = Math.max(0, exercise.load === 'pace'
+        ? roundToHalf(lastWeight * 0.9) : roundToFive(lastWeight * 0.9));
       return { weight: deload, reps: targetReps, note: 'deload ~10% — build back up' };
     }
   }
