@@ -22,7 +22,7 @@ function lsSet(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
 // Before an app update is allowed to touch stored data, the current
 // state is copied aside. Settings can put it back with one tap, so an
 // update can never be the reason progress is lost.
-const APP_VERSION = '2026.10.13';
+const APP_VERSION = '2026.11.09';
 const K_SNAPSHOT  = 'wt_restore_point';
 const K_UNDO      = 'wt_restore_undo';
 const DATA_KEYS = [K_SETTINGS, K_PROGRAM, K_LIBRARY, K_PLAN, K_DAYS, K_LOGS, K_CUSTOM, K_UNITS];
@@ -239,11 +239,19 @@ function isDayDone(dateStr) {
 // the Settings choice is just the default for exercises without one.
 const LB_PER_KG = 2.20462;
 function unitLabel(ex) {
+  if (ex && ex.load === 'pace') return 'mph';   // runs are logged as a speed
   if (ex && unitOverrides[ex.id]) return unitOverrides[ex.id];
   return settings.units || 'lbs';
 }
+
+// How much one tap of the stepper moves the number
+function stepFor(ex) { return ex && ex.load === 'pace' ? 0.1 : (isKg(ex) ? 1.25 : 2.5); }
 function isKg(ex) { return unitLabel(ex) === 'kg'; }
-function toDisplayW(lbs, ex) { return Math.round((isKg(ex) ? lbs / LB_PER_KG : lbs) * 2) / 2; }
+function toDisplayW(lbs, ex) {
+  // paces keep a tenth of a mph; weights round to the nearest half unit
+  if (ex && ex.load === 'pace') return Math.round(lbs * 10) / 10;
+  return Math.round((isKg(ex) ? lbs / LB_PER_KG : lbs) * 2) / 2;
+}
 function fromDisplayW(v, ex) { return isKg(ex) ? v * LB_PER_KG : v; }
 function fmtWt(lbs, ex) { return toDisplayW(lbs, ex) + ' ' + unitLabel(ex); }
 
@@ -526,7 +534,7 @@ function renderExercise(dateStr, block, itemIdx, log) {
     const rVal = pf.reps;
     const weightField = (isBW || isTime)
       ? `<div class="set-field"><input value="BW" disabled /><span class="unit">&nbsp;</span></div>`
-      : `<div class="set-field"><input type="number" inputmode="decimal" value="${toDisplayW(wVal, ex)}" step="${isKg(ex) ? 1.25 : 2.5}" min="0"
+      : `<div class="set-field"><input type="number" inputmode="decimal" value="${toDisplayW(wVal, ex)}" step="${stepFor(ex)}" min="0"
             onchange="logField('${dateStr}','${key}',${s},'weight',this.value)" /><span class="unit">${unitLabel(ex)}</span></div>`;
     rows += `<div class="set-row">
       <button class="set-check ${done ? 'done' : ''}" onclick="toggleSet('${dateStr}','${block.id}',${itemIdx},${s})"></button>
@@ -1180,9 +1188,13 @@ function weekVolume(monday) {
     const ds = iso(addDays(monday, i));
     const log = logs[ds];
     if (!log || !log.sets) continue;
-    for (const sets of Object.values(log.sets))
+    for (const [key, sets] of Object.entries(log.sets)) {
+      const stamp = log.ex && log.ex[key];
+      const ex = stamp && exById(stamp.id);
+      if (ex && ex.load !== 'weight') continue;   // runs and holds are not tonnage
       for (const s of sets)
         if (s && s.done) vol += (Number(s.weight) || 0) * (Number(s.reps) || 0);
+    }
   }
   return vol;
 }
@@ -1207,7 +1219,7 @@ function renderProgress() {
 
   // exercise selector — weighted exercises with history
   const sel = document.getElementById('chartExercise');
-  const tracked = allExercises().filter(e => e.load === 'weight' && exerciseHistory(e.id).length);
+  const tracked = allExercises().filter(e => (e.load === 'weight' || e.load === 'pace') && exerciseHistory(e.id).length);
   const keep = sel.value;
   sel.innerHTML = tracked.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
   if (tracked.some(e => e.id === keep)) sel.value = keep;
