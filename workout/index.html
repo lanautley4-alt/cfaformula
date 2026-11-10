@@ -89,11 +89,6 @@
     <canvas id="volChart" width="640" height="220"></canvas>
   </section>
 
-  <section class="card">
-    <div class="card-head"><h2>Handstand holds</h2></div>
-    <canvas id="hsChart" width="640" height="200"></canvas>
-    <div id="hsEmpty" class="empty hidden">Log wall handstand holds and your best times will show here.</div>
-  </section>
   <div class="bottom-spacer"></div>
 </main>
 
@@ -142,7 +137,7 @@
 
   <section class="card">
     <div class="card-head"><h2>Program</h2></div>
-    <p class="subtle">Reset rebuilds the library: the default Week A / Week B plan plus the shipped workouts (back safe, glutes &amp; legs, 30 minute, cardio). Anything you made yourself is lost. Your logged history is kept.</p>
+    <p class="subtle">Reset rebuilds the library as the Winter Arc split — two leg days and three running days, in two alternating versions. Anything you made yourself is lost. Your logged history is kept.</p>
     <div class="btn-row">
       <button class="btn-outline danger" onclick="resetProgram()">Reset program to default</button>
     </div>
@@ -151,7 +146,7 @@
   <section class="card">
     <div class="card-head"><h2>About</h2></div>
     <p class="subtle" id="aboutVersion"></p>
-    <p class="subtle">Built for: leg growth · lean &amp; toned · strong lats &amp; back · tight waist · full-body barbell compounds (squat, deadlift, clean &amp; jerk) with a touch of handstand skill. No arm isolation.<br><br>The library also carries full body days, a back-safe week (nothing loading or bending the spine), glute and leg days, 30 minute versions, and cardio. Assign any of them to a week from the Week tab.</p>
+    <p class="subtle">Winter arc: two heavy leg days built on back squat and hip thrust, each supersetted with core, and three bootcamp running days whose floor blocks are arms, back &amp; chest, and core. Two versions of the week alternate automatically.</p>
   </section>
   <div class="bottom-spacer"></div>
 </main>
@@ -422,11 +417,11 @@
   </div>
 </div>
 
-<script src="js/data.js?v=5"></script>
-<script src="js/packs.js?v=5"></script>
+<script src="js/data.js?v=6"></script>
+<script src="js/packs.js?v=6"></script>
 <script src="js/progression.js?v=4"></script>
 <script src="js/library.js?v=4"></script>
-<script src="js/app.js?v=15"></script>
+<script src="js/app.js?v=16"></script>
 <script>
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 </script>
