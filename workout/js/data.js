@@ -114,6 +114,30 @@ const BUILTIN_EXERCISES = [
   { id: 'face-pull',         name: 'Face Pull',                 pattern: 'pull_h', muscles: ['back', 'shoulders'], equip: 'cable',   load: 'weight', inc: 2.5 },
   { id: 'rear-delt-fly',     name: 'Rear Delt Fly',             pattern: 'pull_h', muscles: ['back', 'shoulders'], equip: 'machine', load: 'weight', inc: 2.5 },
 
+  // Chest
+  { id: 'db-bench',          name: 'Dumbbell Bench Press',      pattern: 'push_h', muscles: ['chest', 'shoulders'], equip: 'dumbbell', load: 'weight', inc: 5 },
+  { id: 'incline-db-press',  name: 'Incline DB Press',          pattern: 'push_h', muscles: ['chest', 'shoulders'], equip: 'dumbbell', load: 'weight', inc: 5 },
+  { id: 'barbell-bench',     name: 'Barbell Bench Press',       pattern: 'push_h', muscles: ['chest', 'shoulders'], equip: 'barbell',  load: 'weight', inc: 5 },
+  { id: 'machine-chest',     name: 'Machine Chest Press',       pattern: 'push_h', muscles: ['chest'],              equip: 'machine',  load: 'weight', inc: 5 },
+  { id: 'cable-fly',         name: 'Cable Fly',                 pattern: 'push_h', muscles: ['chest'],              equip: 'cable',    load: 'weight', inc: 2.5 },
+  { id: 'db-fly',            name: 'Dumbbell Fly',              pattern: 'push_h', muscles: ['chest'],              equip: 'dumbbell', load: 'weight', inc: 2.5 },
+  { id: 'push-up',           name: 'Push-Up',                   pattern: 'push_h', muscles: ['chest', 'shoulders'], equip: 'bodyweight', load: 'bw' },
+  { id: 'incline-push-up',   name: 'Incline Push-Up',           pattern: 'push_h', muscles: ['chest'],              equip: 'bodyweight', load: 'bw' },
+
+  // Arms
+  { id: 'db-curl',           name: 'Dumbbell Curl',             pattern: 'curl',   muscles: ['biceps'],  equip: 'dumbbell', load: 'weight', inc: 2.5 },
+  { id: 'hammer-curl',       name: 'Hammer Curl',               pattern: 'curl',   muscles: ['biceps'],  equip: 'dumbbell', load: 'weight', inc: 2.5 },
+  { id: 'cable-curl',        name: 'Cable Curl',                pattern: 'curl',   muscles: ['biceps'],  equip: 'cable',    load: 'weight', inc: 2.5 },
+  { id: 'incline-curl',      name: 'Incline DB Curl',           pattern: 'curl',   muscles: ['biceps'],  equip: 'dumbbell', load: 'weight', inc: 2.5 },
+  { id: 'barbell-curl',      name: 'Barbell Curl',              pattern: 'curl',   muscles: ['biceps'],  equip: 'barbell',  load: 'weight', inc: 2.5 },
+  { id: 'tricep-pushdown',   name: 'Tricep Pushdown',           pattern: 'extend', muscles: ['triceps'], equip: 'cable',    load: 'weight', inc: 2.5 },
+  { id: 'rope-pushdown',     name: 'Rope Pushdown',             pattern: 'extend', muscles: ['triceps'], equip: 'cable',    load: 'weight', inc: 2.5 },
+  { id: 'overhead-tricep',   name: 'Overhead Tricep Extension', pattern: 'extend', muscles: ['triceps'], equip: 'dumbbell', load: 'weight', inc: 2.5 },
+  { id: 'skull-crusher',     name: 'Skull Crusher',             pattern: 'extend', muscles: ['triceps'], equip: 'barbell',  load: 'weight', inc: 2.5 },
+  { id: 'close-grip-bench',  name: 'Close-Grip Bench Press',    pattern: 'extend', muscles: ['triceps', 'chest'], equip: 'barbell', load: 'weight', inc: 5 },
+  { id: 'bench-dip',         name: 'Bench Dip',                 pattern: 'extend', muscles: ['triceps'], equip: 'bodyweight', load: 'bw' },
+  { id: 'tricep-dip',        name: 'Tricep Dip',                pattern: 'extend', muscles: ['triceps', 'chest'], equip: 'bodyweight', load: 'bw' },
+
   // Compound presses (allowed arm work)
   { id: 'push-press',        name: 'Push Press',                pattern: 'press',  muscles: ['shoulders', 'legs'], equip: 'barbell', load: 'weight', inc: 5 },
   { id: 'overhead-press',    name: 'Overhead Press',            pattern: 'press',  muscles: ['shoulders'],       equip: 'barbell',   load: 'weight', inc: 2.5 },

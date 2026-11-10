@@ -1043,4 +1043,246 @@ const PACK_2026_11 = {
   ],
 };
 
-const SEED_PACKS = [PACK_2026_09, PACK_2026_09B, PACK_2026_09C, PACK_2026_10, PACK_2026_11];
+// ── Pack 6: Winter Arc ───────────────────────────────────────
+// The split: two heavy compound leg days, each built on one lift
+// supersetted with core, and three bootcamp-style running days whose
+// floor blocks are arms, back & chest, and core. Two versions of the
+// week so nothing repeats fortnight to fortnight.
+//
+// Monday legs / Thursday legs leaves three days between the heavy
+// sessions, and the running days fall on the days between them.
+const PACK_2026_11B = {
+  id: 'pack-2026-11b',
+  rotate: true,
+  replaces_rotation: true,
+
+  workouts: [
+    // ══ WEEK A ══════════════════════════════════════════════
+    {
+      id: 'w-wa-legs1-a', name: 'Legs I · Back Squat (A)', minutes: 55,
+      focus: 'Back Squat + core · Hinge · Quads',
+      blocks: [
+        pkW('wa1a-wu', 'Warm-up', WU_LEGS),
+        pkB('wa1a-a', 'superset', 'Back Squat + Core', 5, 150, [
+          pkX('back-squat', 5, 5, '8', 115), pkX('hanging-leg', 5, 10),
+        ], 'The day is built on this. Squat heavy, then hang and control the legs up — the rest is accessory.'),
+        pkB('wa1a-b', 'superset', 'Hinge + Lunge', 3, 90, [
+          pkX('rdl', 3, 8, '7-8', 95), pkX('walking-lunge', 3, 10, '6-7', 25),
+        ]),
+        pkB('wa1a-c', 'superset', 'Press + Calf', 3, 60, [
+          pkX('leg-press', 3, 12, '7-8', 135), pkX('standing-calf', 3, 15, '6-7', 70),
+        ]),
+        pkB('wa1a-d', 'circuit', 'Core Finisher', 2, 45, [
+          pkX('ab-wheel', 2, 12), pkX('pallof-press', 2, 10, '6-7', 20),
+        ]),
+      ],
+    },
+    {
+      id: 'w-wa-run-arms-a', name: 'Run + Arms (A)', minutes: 50,
+      focus: 'Tread intervals · Biceps & triceps floor',
+      blocks: [
+        pkW('wraa-wu', 'Warm-up', WU_TREAD),
+        pkB('wraa-t1', 'circuit', 'Tread 1 · Base to Push', 3, 0, [
+          pkX('tread-base', 3, 90, '', 6), pkX('tread-push', 3, 60, '', 7.5), pkX('tread-walk', 3, 45, '', 3.5),
+        ], 'Base 1:30, push 1:00, walk :45 — three rounds, then straight to the floor.'),
+        pkB('wraa-f1', 'circuit', 'Floor 1 · Arms', 3, 45, [
+          pkX('db-curl', 3, 12, '7-8', 20), pkX('rope-pushdown', 3, 15, '7-8', 30),
+        ]),
+        pkB('wraa-t2', 'circuit', 'Tread 2 · Push & Sprint', 4, 0, [
+          pkX('tread-push', 4, 45, '', 7.5), pkX('tread-sprint', 4, 20, '', 9.5), pkX('tread-walk', 4, 40, '', 3.5),
+        ], 'Push :45, sprint :20, walk :40 — four rounds.'),
+        pkB('wraa-f2', 'circuit', 'Floor 2 · Arms', 3, 45, [
+          pkX('hammer-curl', 3, 12, '7-8', 20), pkX('overhead-tricep', 3, 12, '7-8', 25),
+        ]),
+        pkB('wraa-core', 'circuit', 'Core Finisher', 2, 30, [
+          pkX('bicycle-crunch', 2, 20), pkX('plank', 2, 45),
+        ]),
+      ],
+    },
+    {
+      id: 'w-wa-run-bc-a', name: 'Run + Back & Chest (A)', minutes: 50,
+      focus: 'Tread intervals · Pull and press floor',
+      blocks: [
+        pkW('wrba-wu', 'Warm-up', WU_TREAD),
+        pkB('wrba-t1', 'circuit', 'Tread 1 · Incline Builder', 3, 0, [
+          pkX('tread-inc-walk', 3, 60, '', 3.5), pkX('tread-inc-run', 3, 45, '', 5.5), pkX('tread-walk', 3, 45, '', 3.5),
+        ], 'Incline 6-8%. Walk 1:00, run :45, flat walk :45 — three rounds.'),
+        pkB('wrba-f1', 'superset', 'Floor 1 · Pull + Press', 3, 60, [
+          pkX('lat-pulldown', 3, 12, '7-8', 70), pkX('db-bench', 3, 10, '7-8', 30),
+        ]),
+        pkB('wrba-t2', 'circuit', 'Tread 2 · Intervals', 5, 0, [
+          pkX('tread-push', 5, 30, '', 7.5), pkX('tread-walk', 5, 30, '', 3.5),
+        ], 'Five rounds of :30 on, :30 off.'),
+        pkB('wrba-f2', 'superset', 'Floor 2 · Row + Incline', 3, 60, [
+          pkX('cable-row', 3, 12, '7-8', 70), pkX('incline-db-press', 3, 10, '7-8', 25),
+        ]),
+        pkB('wrba-core', 'circuit', 'Core Finisher', 2, 30, [
+          pkX('hanging-knee', 2, 12), pkX('side-plank', 2, 30),
+        ]),
+      ],
+    },
+    {
+      id: 'w-wa-legs2-a', name: 'Legs II · Hip Thrust (A)', minutes: 55,
+      focus: 'Hip Thrust + core · Glutes · Hamstrings',
+      blocks: [
+        pkW('wa2a-wu', 'Warm-up', WU_LEGS),
+        pkB('wa2a-a', 'superset', 'Hip Thrust + Core', 5, 120, [
+          pkX('hip-thrust', 5, 8, '8', 185), pkX('hollow-hold', 5, 25),
+        ], 'The day is built on this. Full second squeeze at the top, then straight into the hold.'),
+        pkB('wa2a-b', 'superset', 'Split Squat + Curl', 3, 90, [
+          pkX('bulgarian-split', 3, 10, '7-8', 25), pkX('lying-leg-curl', 3, 12, '7-8', 60),
+        ]),
+        pkB('wa2a-c', 'superset', 'Glute + Calf', 3, 60, [
+          pkX('cable-kickback', 3, 15, '6-7', 20), pkX('seated-calf', 3, 15, '6-7', 45),
+        ]),
+        pkB('wa2a-d', 'circuit', 'Core Finisher', 2, 45, [
+          pkX('reverse-crunch', 2, 15), pkX('copenhagen-plank', 2, 20),
+        ]),
+      ],
+    },
+    {
+      id: 'w-wa-run-core-a', name: 'Run + Core (A)', minutes: 45,
+      focus: 'Tread intervals · Abs and waist floor',
+      blocks: [
+        pkW('wrca-wu', 'Warm-up', WU_TREAD),
+        pkB('wrca-t1', 'circuit', 'Tread 1 · Short Sprints', 6, 0, [
+          pkX('tread-sprint', 6, 20, '', 9.5), pkX('tread-walk', 6, 40, '', 3.5),
+        ], 'Six rounds, :20 sprint and :40 walk.'),
+        pkB('wrca-f1', 'circuit', 'Floor 1 · Abs', 3, 40, [
+          pkX('ab-wheel', 3, 12), pkX('dead-bug', 3, 12), pkX('v-up', 3, 12),
+        ]),
+        pkB('wrca-t2', 'circuit', 'Tread 2 · Incline Burn', 3, 0, [
+          pkX('tread-inc-walk', 3, 90, '', 3.5), pkX('tread-walk', 3, 30, '', 3.5),
+        ], 'Incline 12-15%, 1:30 on, :30 flat. Three rounds.'),
+        pkB('wrca-f2', 'circuit', 'Floor 2 · Waist', 3, 40, [
+          pkX('pallof-press', 3, 12, '6-7', 20), pkX('side-plank', 3, 30), pkX('hollow-rocks', 3, 15),
+        ]),
+      ],
+    },
+
+    // ══ WEEK B ══════════════════════════════════════════════
+    {
+      id: 'w-wa-legs1-b', name: 'Legs I · Back Squat (B)', minutes: 55,
+      focus: 'Heavier squat + core · Unilateral · Quads',
+      blocks: [
+        pkW('wa1b-wu', 'Warm-up', WU_LEGS),
+        pkB('wa1b-a', 'superset', 'Back Squat + Core', 6, 180, [
+          pkX('back-squat', 6, 3, '8-9', 135), pkX('weighted-plank', 6, 30, '', 25),
+        ], 'Heavier than week A, fewer reps. Three strong reps, then brace under the plate.'),
+        pkB('wa1b-b', 'superset', 'Step-Up + Hinge', 3, 90, [
+          pkX('step-up', 3, 10, '7-8', 25), pkX('good-morning', 3, 10, '7', 65),
+        ]),
+        pkB('wa1b-c', 'superset', 'Hack Squat + Calf', 3, 60, [
+          pkX('hack-squat', 3, 12, '7-8', 90), pkX('single-leg-calf', 3, 15, '6-7'),
+        ]),
+        pkB('wa1b-d', 'circuit', 'Core Finisher', 2, 45, [
+          pkX('hanging-knee', 2, 15), pkX('body-saw', 2, 12),
+        ]),
+      ],
+    },
+    {
+      id: 'w-wa-run-arms-b', name: 'Run + Arms (B)', minutes: 50,
+      focus: 'Sprint ladder · Biceps & triceps floor',
+      blocks: [
+        pkW('wrab-wu', 'Warm-up', WU_TREAD),
+        pkB('wrab-t1', 'circuit', 'Tread 1 · Sprint Ladder', 3, 0, [
+          pkX('tread-sprint', 3, 30, '', 9), pkX('tread-walk', 3, 30, '', 3.5),
+          pkX('tread-all-out', 3, 15, '', 10), pkX('tread-walk', 3, 45, '', 3.5),
+        ], 'Sprint :30, walk :30, all-out :15, walk :45. Three rounds.'),
+        pkB('wrab-f1', 'circuit', 'Floor 1 · Arms', 3, 45, [
+          pkX('barbell-curl', 3, 10, '7-8', 40), pkX('skull-crusher', 3, 12, '7-8', 40),
+        ]),
+        pkB('wrab-t2', 'circuit', 'Tread 2 · Long Push', 3, 0, [
+          pkX('tread-push', 3, 90, '', 7.5), pkX('tread-walk', 3, 60, '', 3.5),
+        ], 'Push 1:30, walk 1:00 — three rounds. Hold the pace honest.'),
+        pkB('wrab-f2', 'circuit', 'Floor 2 · Arms', 3, 45, [
+          pkX('incline-curl', 3, 12, '7-8', 17.5), pkX('bench-dip', 3, 12),
+        ]),
+        pkB('wrab-core', 'circuit', 'Core Finisher', 2, 30, [
+          pkX('mountain-climber', 2, 30), pkX('hollow-rocks', 2, 15),
+        ]),
+      ],
+    },
+    {
+      id: 'w-wa-run-bc-b', name: 'Run + Back & Chest (B)', minutes: 50,
+      focus: 'Hills · Pull-ups, push-ups and flyes',
+      blocks: [
+        pkW('wrbb-wu', 'Warm-up', WU_TREAD),
+        pkB('wrbb-t1', 'circuit', 'Tread 1 · Hills', 4, 0, [
+          pkX('tread-hill', 4, 60, '', 4), pkX('tread-walk', 4, 60, '', 3.5),
+        ], 'Incline 10-12%, 1:00 climbing, 1:00 flat recovery. Four rounds.'),
+        pkB('wrbb-f1', 'superset', 'Floor 1 · Pull-Up + Push-Up', 3, 60, [
+          pkX('pull-up', 3, 6, '8'), pkX('push-up', 3, 12, '7-8'),
+        ], 'Swap the pull-up for assisted or a pulldown any time.'),
+        pkB('wrbb-t2', 'circuit', 'Tread 2 · Base & Sprint', 3, 0, [
+          pkX('tread-base', 3, 120, '', 6), pkX('tread-sprint', 3, 20, '', 9.5), pkX('tread-walk', 3, 40, '', 3.5),
+        ], 'Base 2:00, sprint :20, walk :40 — three rounds.'),
+        pkB('wrbb-f2', 'superset', 'Floor 2 · Row + Fly', 3, 60, [
+          pkX('cs-row', 3, 12, '7-8', 60), pkX('cable-fly', 3, 15, '6-7', 25),
+        ]),
+        pkB('wrbb-core', 'circuit', 'Core Finisher', 2, 30, [
+          pkX('hanging-leg', 2, 10), pkX('pallof-press', 2, 12, '6-7', 20),
+        ]),
+      ],
+    },
+    {
+      id: 'w-wa-legs2-b', name: 'Legs II · Hip Thrust (B)', minutes: 55,
+      focus: 'Hip thrust volume + core · Hamstrings · Glutes',
+      blocks: [
+        pkW('wa2b-wu', 'Warm-up', WU_LEGS),
+        pkB('wa2b-a', 'superset', 'Hip Thrust + Core', 4, 120, [
+          pkX('hip-thrust', 4, 12, '8', 155), pkX('l-sit', 4, 20),
+        ], 'Higher reps than week A. Squeeze every rep, then hold the L-sit as long as it stays clean.'),
+        pkB('wa2b-b', 'superset', 'RDL + Curl', 3, 90, [
+          pkX('single-leg-rdl', 3, 10, '7-8', 30), pkX('seated-leg-curl', 3, 15, '7-8', 55),
+        ]),
+        pkB('wa2b-c', 'superset', 'Pull-Through + Abduction', 3, 60, [
+          pkX('cable-pullthrough', 3, 15, '6-7', 45), pkX('abduction-machine', 3, 20, '6-7', 60),
+        ]),
+        pkB('wa2b-d', 'circuit', 'Core Finisher', 2, 45, [
+          pkX('decline-situp', 2, 15), pkX('plank-taps', 2, 20),
+        ]),
+      ],
+    },
+    {
+      id: 'w-wa-run-core-b', name: 'Run + Core (B)', minutes: 45,
+      focus: 'Long intervals · Abs and waist floor',
+      blocks: [
+        pkW('wrcb-wu', 'Warm-up', WU_TREAD),
+        pkB('wrcb-t1', 'circuit', 'Tread 1 · Long Intervals', 3, 0, [
+          pkX('tread-base', 3, 180, '', 6), pkX('tread-walk', 3, 60, '', 3.5),
+        ], 'Three minutes at base, one minute walking. Three rounds.'),
+        pkB('wrcb-f1', 'circuit', 'Floor 1 · Abs', 3, 40, [
+          pkX('hanging-leg', 3, 10), pkX('cable-crunch', 3, 15, '7-8', 45), pkX('body-saw', 3, 12),
+        ]),
+        pkB('wrcb-t2', 'circuit', 'Tread 2 · Sprint Finish', 5, 0, [
+          pkX('tread-sprint', 5, 20, '', 9.5), pkX('tread-walk', 5, 40, '', 3.5),
+        ], 'Five sprints, :20 on, :40 off.'),
+        pkB('wrcb-f2', 'circuit', 'Floor 2 · Waist', 3, 40, [
+          pkX('copenhagen-plank', 3, 20), pkX('windshield-wiper', 3, 8), pkX('hollow-hold', 3, 30),
+        ]),
+      ],
+    },
+  ],
+
+  weeks: [
+    {
+      id: 'wk-winter-a', name: 'Winter Arc · Week A', focus: 'Legs Mon & Thu, running Tue, Wed and Fri',
+      days: { 1: 'w-wa-legs1-a', 2: 'w-wa-run-arms-a', 3: 'w-wa-run-bc-a', 4: 'w-wa-legs2-a', 5: 'w-wa-run-core-a', 6: null, 0: null },
+    },
+    {
+      id: 'wk-winter-b', name: 'Winter Arc · Week B', focus: 'Same split, heavier squats and different floor work',
+      days: { 1: 'w-wa-legs1-b', 2: 'w-wa-run-arms-b', 3: 'w-wa-run-bc-b', 4: 'w-wa-legs2-b', 5: 'w-wa-run-core-b', 6: null, 0: null },
+    },
+  ],
+};
+
+const SEED_PACKS = [PACK_2026_09, PACK_2026_09B, PACK_2026_09C, PACK_2026_10, PACK_2026_11, PACK_2026_11B];
+
+// Everything the Winter Arc split needs. Anything else that shipped and
+// was never touched is cleared out when the split lands, to keep the
+// library short.
+const KEEP_ON_TIDY = new Set([
+  ...PACK_2026_11B.workouts.map(w => w.id),
+  ...PACK_2026_11B.weeks.map(w => w.id),
+]);

@@ -22,7 +22,7 @@ function lsSet(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
 // Before an app update is allowed to touch stored data, the current
 // state is copied aside. Settings can put it back with one tap, so an
 // update can never be the reason progress is lost.
-const APP_VERSION = '2026.11.09';
+const APP_VERSION = '2026.11.10';
 const K_SNAPSHOT  = 'wt_restore_point';
 const K_UNDO      = 'wt_restore_undo';
 const DATA_KEYS = [K_SETTINGS, K_PROGRAM, K_LIBRARY, K_PLAN, K_DAYS, K_LOGS, K_CUSTOM, K_UNITS];
@@ -128,17 +128,60 @@ function applySeedPacks() {
     for (const w of pack.workouts)
       if (!library.workouts.some(x => x.id === w.id)) library.workouts.push(structuredClone(w));
     plan.rotation = plan.rotation || [];
+    // a pack that replaces the rotation takes it over entirely
+    if (pack.replaces_rotation) plan.rotation = [];
     for (const wk of pack.weeks) {
       if (!library.weeks.some(x => x.id === wk.id)) library.weeks.push(structuredClone(wk));
       // packs marked `rotate` join the automatic rotation; the rest wait
       // to be assigned by hand
       if (pack.rotate && !plan.rotation.includes(wk.id)) plan.rotation.push(wk.id);
     }
+    if (pack.replaces_rotation) {
+      // a week pinned to a calendar week would outrank the new split
+      plan.assign = {};
+      tidyLibrary();
+    }
     plan.seeded.push(pack.id);
     changed = true;
   }
   if (changed) { saveLibrary(); savePlan(); }
 }
+
+// Clear out workouts and week templates that shipped with an earlier
+// update and were never opened or changed, so the library holds the
+// current split plus whatever she built herself. Anything edited, and
+// every logged workout, is left alone.
+function tidyLibrary() {
+  if (typeof SEED_PACKS === 'undefined' || typeof KEEP_ON_TIDY === 'undefined') return;
+  const shipped = new Map();
+  for (const pack of SEED_PACKS) {
+    for (const w of pack.workouts) shipped.set(w.id, JSON.stringify(w));
+    for (const wk of pack.weeks) shipped.set(wk.id, JSON.stringify(wk));
+  }
+  // the original Week A / Week B program counts as shipped too, so the
+  // ones she never changed go as well
+  try {
+    const base = defaultLibrary();
+    for (const w of base.workouts) if (!shipped.has(w.id)) shipped.set(w.id, JSON.stringify(w));
+    for (const wk of base.weeks) if (!shipped.has(wk.id)) shipped.set(wk.id, JSON.stringify(wk));
+  } catch { /* leave the originals alone if they cannot be rebuilt */ }
+  const untouched = x => shipped.has(x.id) && !KEEP_ON_TIDY.has(x.id) &&
+                         shipped.get(x.id) === JSON.stringify(x);
+
+  library.weeks = library.weeks.filter(w => !untouched(w));
+
+  // a week template she kept must not be left pointing at nothing, so
+  // anything its days still use stays as well
+  const needed = new Set();
+  for (const wk of library.weeks)
+    for (const id of Object.values(wk.days || {})) if (id) needed.add(id);
+
+  library.workouts = library.workouts.filter(w => needed.has(w.id) || !untouched(w));
+
+  const live = new Set(library.weeks.map(w => w.id));
+  plan.rotation = (plan.rotation || []).filter(id => live.has(id));
+}
+
 applySeedPacks();
 
 const REST_DAY = { id: '__rest', name: 'Rest Day', focus: 'Recovery — sleep, protein, hydrate', minutes: 0, blocks: [], rest: true };
@@ -1249,20 +1292,6 @@ function renderProgress() {
   }
   drawBarChart(document.getElementById('volChart'), bars);
 
-  // handstand chart — best timed hold per date
-  const hsIds = ['wall-hold-back', 'wall-hold-chest', 'crow-pose'];
-  const byDate = {};
-  for (const id of hsIds)
-    for (const h of exerciseHistory(id)) {
-      const best = Math.max(...h.sets.filter(s => s.done).map(s => Number(s.reps) || 0), 0);
-      byDate[h.date] = Math.max(byDate[h.date] || 0, best);
-    }
-  const hsPoints = Object.entries(byDate).sort().map(([x, y]) => ({ x, y }));
-  const hsCanvas = document.getElementById('hsChart');
-  const hsEmpty = document.getElementById('hsEmpty');
-  hsCanvas.classList.toggle('hidden', !hsPoints.length);
-  hsEmpty.classList.toggle('hidden', !!hsPoints.length);
-  if (hsPoints.length) drawLineChart(hsCanvas, hsPoints, 's');
 }
 
 // ── Tiny charts ───────────────────────────────────────────────
@@ -1454,7 +1483,7 @@ function importData(event) {
 }
 
 function resetProgram() {
-  if (!confirm('Reset your library to the default Week A / Week B plan? Every saved workout and week template you made will be lost. Your logged history stays.')) return;
+  if (!confirm('Reset your library to the Winter Arc split? Every saved workout and week template you made will be lost. Your logged history stays.')) return;
   library = defaultLibrary();
   plan = { assign: {}, rotation: library.weeks.map(w => w.id), seeded: [] };
   days = {};
