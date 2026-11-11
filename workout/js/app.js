@@ -22,7 +22,7 @@ function lsSet(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
 // Before an app update is allowed to touch stored data, the current
 // state is copied aside. Settings can put it back with one tap, so an
 // update can never be the reason progress is lost.
-const APP_VERSION = '2026.11.10';
+const APP_VERSION = '2026.11.11';
 const K_SNAPSHOT  = 'wt_restore_point';
 const K_UNDO      = 'wt_restore_undo';
 const DATA_KEYS = [K_SETTINGS, K_PROGRAM, K_LIBRARY, K_PLAN, K_DAYS, K_LOGS, K_CUSTOM, K_UNITS];
@@ -183,6 +183,24 @@ function tidyLibrary() {
 }
 
 applySeedPacks();
+
+// The 100 rep core finisher ends every running day, including ones
+// already sitting in the library from an earlier update. Runs once.
+function applyCore100() {
+  if (plan.core100) return;
+  if (typeof isRunWorkout !== 'function' || typeof attachCore100 !== 'function') return;
+  let changed = false;
+  for (const w of library.workouts) {
+    if (!isRunWorkout(w)) continue;
+    if ((w.blocks || []).some(b => /100 REP CORE/i.test(b.name || ''))) continue;
+    attachCore100(w, w.id);
+    changed = true;
+  }
+  plan.core100 = true;
+  if (changed) saveLibrary();
+  savePlan();
+}
+applyCore100();
 
 const REST_DAY = { id: '__rest', name: 'Rest Day', focus: 'Recovery — sleep, protein, hydrate', minutes: 0, blocks: [], rest: true };
 const REST_WEEK = { id: '__rest', name: 'Rest Week', focus: 'A full week off', days: { 0: null, 1: null, 2: null, 3: null, 4: null, 5: null, 6: null } };

@@ -167,6 +167,16 @@ const BUILTIN_EXERCISES = [
   { id: 'l-sit',             name: 'L-Sit',                     pattern: 'core_ae', muscles: ['core'],           equip: 'bodyweight', load: 'time', repUnit: 'sec' },
   { id: 'dragon-flag-neg',   name: 'Dragon Flag Negative',      pattern: 'core_ae', muscles: ['core'],           equip: 'bodyweight', load: 'bw' },
 
+  // Core — the 100 rep finisher
+  { id: 'hollow-chest-press', name: 'Hollow Hold Chest Press',        pattern: 'core_flex', muscles: ['core'], equip: 'dumbbell',  load: 'weight', inc: 2.5 },
+  { id: 'wt-leg-raise',       name: 'Weighted Leg Raise',             pattern: 'core_flex', muscles: ['core'], equip: 'dumbbell',  load: 'weight', inc: 2.5 },
+  { id: 'wt-hollow-tuck',     name: 'Weighted Hollow Knee Tuck',      pattern: 'core_flex', muscles: ['core'], equip: 'dumbbell',  load: 'weight', inc: 2.5 },
+  { id: 'wt-deadbug-straight', name: 'Straight-Leg Dead Bug (wtd)',   pattern: 'core_ae',   muscles: ['core'], equip: 'dumbbell',  load: 'weight', inc: 2.5 },
+  { id: 'wt-situp',           name: 'Weighted Sit-Up',                pattern: 'core_flex', muscles: ['core'], equip: 'dumbbell',  load: 'weight', inc: 2.5 },
+  { id: 'v-sit-tuck',         name: 'V-Sit Knee Tuck',                pattern: 'core_flex', muscles: ['core'], equip: 'bodyweight', load: 'bw' },
+  { id: 'v-sit-in-out',       name: 'V-Sit Tuck In & Out',            pattern: 'core_flex', muscles: ['core'], equip: 'bodyweight', load: 'bw' },
+  { id: 'v-sit-bicycle',      name: 'V-Sit Bicycle Crunch',           pattern: 'core_flex', muscles: ['core', 'obliques'], equip: 'bodyweight', load: 'bw' },
+
   // Core — flexion
   { id: 'hanging-knee',      name: 'Hanging Knee Raise',        pattern: 'core_flex', muscles: ['core'],         equip: 'bodyweight', load: 'bw' },
   { id: 'hanging-leg',       name: 'Hanging Leg Raise',         pattern: 'core_flex', muscles: ['core'],         equip: 'bodyweight', load: 'bw' },
