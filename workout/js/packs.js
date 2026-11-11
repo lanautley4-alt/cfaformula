@@ -1279,6 +1279,39 @@ const PACK_2026_11B = {
 
 const SEED_PACKS = [PACK_2026_09, PACK_2026_09B, PACK_2026_09C, PACK_2026_10, PACK_2026_11, PACK_2026_11B];
 
+// ── The 100 rep core finisher ────────────────────────────────
+// One hundred reps straight through, no rest: five weighted movements,
+// then the weight goes down and you finish on the floor. Every running
+// day ends with it.
+function core100Block(prefix) {
+  return pkB(prefix + '-100', 'circuit', '100 REP CORE', 1, 0, [
+    pkX('hollow-chest-press',  1, 10, '', 10),
+    pkX('wt-leg-raise',        1, 10, '', 10),
+    pkX('wt-hollow-tuck',      1, 10, '', 10),
+    pkX('wt-deadbug-straight', 1, 20, '', 10),
+    pkX('wt-situp',            1, 10, '', 10),
+    pkX('v-sit-tuck',          1, 10),
+    pkX('v-sit-in-out',        1, 10),
+    pkX('v-sit-bicycle',       1, 20),
+  ], '100 reps, no stopping. Weight for the first five movements — dead bug is 10 each side — then drop it and finish the last three in a V-sit.');
+}
+
+// A workout is a running one if any block uses the treadmill.
+function isRunWorkout(w) {
+  return ((w && w.blocks) || []).some(b =>
+    ((b && b.items) || []).some(i => String(i.ex).startsWith('tread-')));
+}
+
+// Swap a trailing core block for the finisher, or add it on the end.
+function attachCore100(w, prefix) {
+  const blocks = w.blocks || (w.blocks = []);
+  const last = blocks[blocks.length - 1];
+  if (last && last.type !== 'warmup' && /core|abs|waist/i.test(last.name || '')) blocks.pop();
+  blocks.push(core100Block(prefix || w.id));
+}
+
+for (const w of PACK_2026_11B.workouts) if (isRunWorkout(w)) attachCore100(w);
+
 // Everything the Winter Arc split needs. Anything else that shipped and
 // was never touched is cleared out when the split lands, to keep the
 // library short.
